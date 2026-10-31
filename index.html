@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="gu" class="h-full bg-slate-100">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>કોર્ટ બેલીફ રીપોર્ટ અને G.T.R. Form No. 35 - T.A. Bill Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Gujarati:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <!-- Firebase SDK for Cloud Save -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
+    <style>
+        body { font-family: 'Noto Sans Gujarati', 'Inter', sans-serif; }
+        @media print {
+            .no-print { display: none !important; }
+            body { background: white !important; padding: 0 !important; font-size: 11pt; }
+            .print-container { width: 100% !important; max-width: 100% !important; box-shadow: none !important; border: none !important; margin: 0 !important; padding: 0 !important; }
+            input, select { border: none !important; background: transparent !important; appearance: none !important; -webkit-appearance: none !important; }
+            th, td { border: 1px solid #000 !important; padding: 4px !important; }
+        }
+    </style>
+</head>
+<body class="h-full flex flex-col text-slate-800 bg-slate-100">
+
+    <!-- NAVBAR -->
+    <header class="no-print bg-slate-900 text-white sticky top-0 z-40 shadow-md">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-2">
+            <div class="flex items-center space-x-3">
+                <div class="p-2 bg-sky-700 rounded-lg"><i data-lucide="scale" class="w-6 h-6"></i></div>
+                <div>
+                    <h1 class="text-base sm:text-lg font-bold">ગુજરાત સરકાર - કોર્ટ બેલીફ T.A. બિલ પોર્ટલ</h1>
+                    <p id="cloud-status" class="text-xs text-amber-300">મોડ: લોકલ + બેકઅપ (ક્લાઉડ જોડવા ⚙️ સેટિંગ્સ જુઓ)</p>
+                </div>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-2">
+                <button onclick="saveBillData()" class="bg-emerald-600 hover:bg-emerald-700 px-3 py-2 rounded-lg text-xs sm:text-sm font-bold flex items-center gap-1.5 shadow">
+                    <i data-lucide="save" class="w-4 h-4"></i><span>બિલ સેવ કરો</span>
+                </button>
+                <button onclick="window.print()" class="bg-sky-600 hover:bg-sky-700 px-3 py-2 rounded-lg text-xs sm:text-sm font-bold flex items-center gap-1.5 shadow">
+                    <i data-lucide="printer" class="w-4 h-4"></i><span>પ્રિન્ટ / PDF</span>
+                </button>
+                <button onclick="exportBackupFile()" class="bg-indigo-600 hover:bg-indigo-700 px-3 py-2 rounded-lg text-xs sm:text-sm font-bold flex items-center gap-1.5" title="બિલની ફાઈલ ડાઉનલોડ કરી WhatsApp પર મોકલો">
+                    <i data-lucide="download" class="w-4 h-4"></i><span class="hidden sm:inline">બિલ ફાઈલ શેર</span>
+                </button>
+                <label class="bg-slate-700 hover:bg-slate-600 px-3 py-2 rounded-lg text-xs sm:text-sm font-bold flex items-center gap-1.5 cursor-pointer">
+                    <i data-lucide="upload" class="w-4 h-4"></i><span class="hidden sm:inline">ફાઈલ ખોલો</span>
+                    <input type="file" accept=".json" onchange="importBackupFile(event)" class="hidden">
+                </label>
+                <button onclick="openCloudSetup()" class="bg-slate-700 hover:bg-slate-600 p-2 rounded-lg text-xs" title="ક્લાઉડ ડેટાબેઝ સેટિંગ">
+                    <i data-lucide="settings" class="w-4 h-4"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- TABS -->
+        <div class="bg-slate-800 px-4 border-t border-slate-700">
+            <div class="max-w-7xl mx-auto flex space-x-2 overflow-x-auto py-2">
+                <button onclick="switchTab('bailiff')" id="tab-btn-bailiff" class="tab-btn px-4 py-2 text-xs sm:text-sm font-bold rounded-lg bg-sky-600 text-white whitespace-nowrap">૧. બેલીફ પ્રોસેસ રીપોર્ટ</button>
+                <button onclick="switchTab('gtr')" id="tab-btn-gtr" class="tab-btn px-4 py-2 text-xs sm:text-sm font-bold rounded-lg text-slate-300 hover:bg-slate-700 whitespace-nowrap">૨. G.T.R. Form No. 35</button>
+                <button onclick="switchTab('ta')" id="tab-btn-ta" class="tab-btn px-4 py-2 text-xs sm:text-sm font-bold rounded-lg text-slate-300 hover:bg-slate-700 whitespace-nowrap">૩. મુસાફરી વિગત (T.A. Log)</button>
+                <button onclick="switchTab('saved')" id="tab-btn-saved" class="tab-btn px-4 py-2 text-xs sm:text-sm font-bold rounded-lg text-amber-300 hover:bg-slate-700 whitespace-nowrap">૪. સેવ કરેલા તમામ બિલ (<span id="saved-count">0</span>)</button>
+            </div>
+        </div>
+    </header>
+
+    <datalist id="village-list">
+        <option value="ગાંધીનગર"><option value="હાઈકોર્ટ"><option value="માધવગઢ"><option value="સારાબપુરા">
+        <option value="ચંદ્રાળા"><option value="મગોડી"><option value="પેથાપુર"><option value="હરીપુરા">
+        <option value="ખારીયા"><option value="કલોલ"><option value="દહેગામ"><option value="માણસા"><option value="અડાલજ">
+    </datalist>
+
+    <main class="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-6">
+
+        <!-- QUICK TOOLBAR -->
+        <div class="no-print bg-white p-3 rounded-xl shadow-sm border border-slate-200 mb-4 flex flex-wrap items-center justify-between gap-3 text-xs">
+            <div class="flex flex-wrap items-center gap-3">
+                <span class="font-bold text-slate-700">ઝડપી સેટિંગ્સ:</span>
+                <label class="flex items-center gap-1">પ્રતિ કિ.મી. ભાડું (₹):
+                    <input type="number" id="km-rate" value="2.5" step="0.5" oninput="recalculateAll()" class="w-16 border border-slate-300 rounded px-2 py-1 font-bold text-center">
+                </label>
+                <label class="flex items-center gap-1">૧૦૦% દૈનિક ભથ્થું (₹):
+                    <input type="number" id="full-da-rate" value="300" step="10" oninput="recalculateAll()" class="w-20 border border-slate-300 rounded px-2 py-1 font-bold text-center">
+                </label>
+            </div>
+            <button onclick="resetNewBill()" class="bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200 px-3 py-1.5 rounded-lg font-bold">+ નવું કોરું બિલ શરૂ કરો</button>
+        </div>
+
+        <!-- TAB 1: BAILIFF REPORT -->
+        <section id="tab-bailiff" class="tab-content print-container bg-white rounded-xl shadow-md border border-slate-200 p-4 sm:p-8 space-y-6">
+            <div class="text-center space-y-2 border-b-2 border-slate-800 pb-4">
+                <div class="flex items-center justify-center gap-2">
+                    <span class="font-bold text-lg sm:text-xl">મે.</span>
+                    <input type="text" id="court-title" value="પ્રિન્સિપાલ સિવિલ જજ સાહેબશ્રી, ગાંધીનગર, મુ. ગાંધીનગર" class="text-center font-bold text-lg sm:text-xl w-full sm:w-3/4 border-b border-dashed border-slate-400 focus:outline-none">
+                </div>
+                <div class="text-sm sm:text-base leading-relaxed pt-2">
+                    આપ સાહેબશ્રીના કોર્ટના બેલીફ 
+                    <input type="text" id="bailiff-name" placeholder="બેલીફનું નામ લખો" oninput="syncBailiffToTA()" class="font-bold border-b-2 border-dashed border-slate-600 px-2 text-center min-w-[200px]">
+                    નો નમ્રતાપુર્વક રીપોર્ટ કે, માહે 
+                    <input type="text" id="from-month" value="07/2025" class="font-bold border-b-2 border-dashed border-slate-600 w-24 text-center">
+                    થી માહે 
+                    <input type="text" id="to-month" value="07/2025" class="font-bold border-b-2 border-dashed border-slate-600 w-24 text-center">
+                    દરમિયાન અમો પ્રોસેસ બજાવવા સારુ ગયેલા. જેનો રીપોર્ટ નીચે મુજબ છે. મારે બેઝીક પગાર રૂ. 
+                    <input type="number" id="basic-pay" value="25500" class="font-bold border-b-2 border-dashed border-slate-600 w-28 text-center">
+                    પ્રતિ માસ છે.
+                </div>
+            </div>
+
+            <div class="space-y-3">
+                <div class="flex justify-between items-center no-print">
+                    <h3 class="text-sm sm:text-base font-bold text-slate-800">પ્રોસેસ બજવણી મુસાફરી પત્રક</h3>
+                    <button onclick="addNewDayGroup()" class="bg-sky-700 hover:bg-sky-800 text-white px-3 py-2 rounded-lg text-xs font-bold flex items-center gap-1 shadow">
+                        <i data-lucide="plus-circle" class="w-4 h-4"></i><span>નવી તારીખ / દિવસ ઉમેરો</span>
+                    </button>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-xs text-slate-900 border-collapse border border-slate-800">
+                        <thead>
+                            <tr class="bg-slate-200 font-bold text-center">
+                                <th class="border border-slate-800 p-2 w-28">તારીખ</th>
+                                <th class="border border-slate-800 p-2">ક્યા ગામથી નીકળ્યા</th>
+                                <th class="border border-slate-800 p-2 w-20">કેટલા વાગે નીકળ્યા</th>
+                                <th class="border border-slate-800 p-2">ક્યા ગામે પહોંચ્યા</th>
+                                <th class="border border-slate-800 p-2 w-20">કેટલા વાગે પહોંચ્યા</th>
+                                <th class="border border-slate-800 p-2 w-24">સાધન નં.</th>
+                                <th class="border border-slate-800 p-2 w-16">કિ. મી.</th>
+                                <th class="border border-slate-800 p-2 w-20">ટકા વારી</th>
+                                <th class="border border-slate-800 p-2 w-20">ભાડુ</th>
+                                <th class="border border-slate-800 p-2 w-20">ભથ્થુ</th>
+                                <th class="border border-slate-800 p-2 w-24 bg-slate-300">કુલ</th>
+                                <th class="border border-slate-800 p-1 w-16 no-print">ક્રિયા</th>
+                            </tr>
+                        </thead>
+                        <tbody id="bailiff-tbody"></tbody>
+                        <tfoot>
+                            <tr class="bg-slate-200 font-bold text-sm">
+                                <td colspan="6" class="border border-slate-800 p-2 text-right">કુલ સરવાળો (Total):</td>
+                                <td id="bailiff-total-km" class="border border-slate-800 p-2 text-center">0</td>
+                                <td class="border border-slate-800 p-2 text-center">-</td>
+                                <td id="bailiff-total-fare" class="border border-slate-800 p-2 text-right">0.00</td>
+                                <td id="bailiff-total-da" class="border border-slate-800 p-2 text-right">0.00</td>
+                                <td id="bailiff-grand-total" class="border border-slate-800 p-2 text-right font-extrabold bg-slate-300">0.00</td>
+                                <td class="border border-slate-800 no-print"></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+
+            <div class="pt-12 grid grid-cols-2 gap-8 text-center text-xs font-bold">
+                <div><p class="mb-12">તારીખ: _______________</p><p>તપાસનાર ક્લાર્ક ની સહી</p></div>
+                <div><p class="mb-12">સ્થળ: ગાંધીનગર</p><p>બેલીફની સહી</p></div>
+            </div>
+        </section>
+
+        <!-- TAB 2: GTR FORM 35 -->
+        <section id="tab-gtr" class="tab-content print-container bg-white rounded-xl shadow-md border border-slate-200 p-4 sm:p-8 hidden space-y-6">
+            <div class="text-center border-b-2 border-slate-900 pb-3">
+                <h2 class="text-xl font-bold">FORM G. T. R. No. 35</h2>
+                <p class="text-xs italic">(See Rule 169 and 186)</p>
+                <p class="text-sm font-bold mt-2">Travelling Allowance Bill of the Establishment</p>
+                <input type="text" id="gtr-office" value="Principal Civil Court, Gandhinagar" class="w-full text-center border-b border-slate-400 font-bold text-sm mt-1">
+            </div>
+
+            <table class="w-full border-collapse border border-slate-800 text-xs">
+                <thead>
+                    <tr class="bg-slate-100 font-bold text-center">
+                        <th class="border border-slate-800 p-2">Budget Code</th>
+                        <th class="border border-slate-800 p-2">Object</th>
+                        <th class="border border-slate-800 p-2">EDP Code</th>
+                        <th class="border border-slate-800 p-2">Amount (Rs.)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="border border-slate-800 p-2 text-center font-mono">1100</td>
+                        <td class="border border-slate-800 p-2 font-semibold">Domestic Travel Expenses (Net)</td>
+                        <td class="border border-slate-800 p-2 text-center font-mono">1101+</td>
+                        <td id="gtr-domestic-amt" class="border border-slate-800 p-2 text-right font-bold font-mono text-sm">0.00</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- TAB 3: TA LOG -->
+        <section id="tab-ta" class="tab-content print-container bg-white rounded-xl shadow-md border border-slate-200 p-4 sm:p-8 hidden space-y-6">
+            <div class="border-b-2 border-slate-900 pb-3 flex justify-between items-center">
+                <div>
+                    <h2 class="text-lg font-bold">Travelling Allowance Journey Log</h2>
+                    <p class="text-xs font-bold mt-1">NAME: <span id="ta-emp-name-display" class="underline"></span> | DESIGNATION: <span class="underline">Bailiff</span></p>
+                </div>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-xs border-collapse border border-slate-800">
+                    <thead>
+                        <tr class="bg-slate-200 font-bold text-center">
+                            <th class="border border-slate-800 p-1.5">From Station</th>
+                            <th class="border border-slate-800 p-1.5">Date</th>
+                            <th class="border border-slate-800 p-1.5">Dep. Hour</th>
+                            <th class="border border-slate-800 p-1.5">To Station</th>
+                            <th class="border border-slate-800 p-1.5">Arr. Hour</th>
+                            <th class="border border-slate-800 p-1.5">Mode</th>
+                            <th class="border border-slate-800 p-1.5">KM</th>
+                            <th class="border border-slate-800 p-1.5">Amount (Rs.)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ta-tbody"></tbody>
+                    <tfoot>
+                        <tr class="bg-slate-200 font-bold">
+                            <td colspan="7" class="border border-slate-800 p-2 text-right">Total Claimed Amount (Rs.):</td>
+                            <td id="ta-total-amount" class="border border-slate-800 p-2 text-right font-extrabold">0.00</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </section>
+
+        <!-- TAB 4: SAVED BILLS DASHBOARD -->
+        <section id="tab-saved" class="tab-content no-print bg-white rounded-xl shadow-md border border-slate-200 p-4 sm:p-8 hidden space-y-4">
+            <div class="flex flex-wrap justify-between items-center gap-2 border-b pb-3">
+                <div>
+                    <h2 class="text-lg font-bold text-slate-900">સેવ કરેલા તમામ બિલ (Saved Bills)</h2>
+                    <p class="text-xs text-slate-500">અહીંથી કોઈ પણ જૂનું બિલ ખોલી શકાશે અથવા પ્રિન્ટ કરી શકાશે.</p>
+                </div>
+                <input type="text" id="search-bills" oninput="renderSavedBillsList()" placeholder="બેલીફનું નામ કે માસ શોધો..." class="border border-slate-300 rounded-lg px-3 py-1.5 text-xs w-64">
+            </div>
+            <div id="saved-bills-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+        </section>
+    </main>
+
+    <!-- CLOUD SETUP MODAL -->
+    <div id="cloud-modal" class="no-print fixed inset-0 bg-black/60 hidden items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-xl max-w-md w-full p-5 space-y-4 shadow-2xl">
+            <h3 class="text-base font-bold text-slate-900">ઓનલાઈન ક્લાઉડ ડેટાબેઝ સેટિંગ (Firebase)</h3>
+            <p class="text-xs text-slate-600 leading-relaxed">બધાના મોબાઈલ/કોમ્પ્યુટરમાં ડેટા એકસાથે ઓનલાઈન દેખાય તે માટે Firebase Config JSON અહીં પેસ્ટ કરો (એક જ વાર કરવાનું રહેશે):</p>
+            <textarea id="firebase-config-input" rows="5" placeholder='{"apiKey": "...", "projectId": "..."}' class="w-full border border-slate-300 rounded-lg p-2 text-xs font-mono"></textarea>
+            <div class="flex justify-end gap-2">
+                <button onclick="document.getElementById('cloud-modal').classList.add('hidden')" class="px-3 py-1.5 text-xs font-bold text-slate-600">બંધ કરો</button>
+                <button onclick="saveFirebaseConfig()" class="bg-emerald-600 text-white px-4 py-1.5 rounded-lg text-xs font-bold">કનેક્ટ કરો</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let dayCounter = 0;
+        let currentBillId = null;
+        let db = null;
+
+        document.addEventListener("DOMContentLoaded", () => {
+            lucide.createIcons();
+            initCloudIfConfigured();
+            loadDefaultData();
+            loadSavedBillsList();
+        });
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('bg-sky-600', 'text-white'));
+            document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+            document.getElementById(`tab-btn-${tabId}`).classList.add('bg-sky-600', 'text-white');
+            if (tabId === 'ta' || tabId === 'gtr') syncBailiffToTA();
+            if (tabId === 'saved') renderSavedBillsList();
+        }
+
+        function addNewDayGroup(dateStr = "", pct = "30", customDa = null, journeys = []) {
+            dayCounter++;
+            const dayId = `day-${dayCounter}`;
+            const tbody = document.getElementById('bailiff-tbody');
+            const fullDa = parseFloat(document.getElementById('full-da-rate').value) || 300;
+            const calcDa = customDa !== null ? customDa : Math.round((fullDa * parseInt(pct)) / 100);
+
+            const allowanceTr = document.createElement('tr');
+            allowanceTr.id = `${dayId}-allowance`;
+            allowanceTr.dataset.dayid = dayId;
+            allowanceTr.className = "bg-amber-50/70 font-bold border-b-2 border-slate-800";
+            allowanceTr.innerHTML = `
+                <td colspan="7" class="border border-slate-800 p-1.5 text-left">
+                    <div class="flex flex-wrap items-center justify-between gap-1 no-print">
+                        <div class="flex gap-1">
+                            <button onclick="addJourneyRow('${dayId}')" class="bg-sky-100 hover:bg-sky-200 text-sky-900 px-2 py-1 rounded text-[11px] font-bold">+ ગામ ઉમેરો</button>
+                            <button onclick="addReturnGandhinagar('${dayId}')" class="bg-emerald-100 hover:bg-emerald-200 text-emerald-900 px-2 py-1 rounded text-[11px] font-bold">↩ રિટર્ન ગાંધીનગર</button>
+                        </div>
+                        <span class="text-[11px] text-slate-600">દૈનિક ભથ્થું (D.A.):</span>
+                    </div>
+                </td>
+                <td class="border border-slate-800 p-1">
+                    <select onchange="onPctChange(this)" class="day-pct w-full text-center font-bold bg-transparent cursor-pointer">
+                        <option value="0" ${pct=="0"?"selected":""}>0%</option>
+                        <option value="30" ${pct=="30"?"selected":""}>30%</option>
+                        <option value="50" ${pct=="50"?"selected":""}>50%</option>
+                        <option value="70" ${pct=="70"?"selected":""}>70%</option>
+                        <option value="100" ${pct=="100"?"selected":""}>100%</option>
+                    </select>
+                </td>
+                <td class="border border-slate-800 p-1 text-center">-</td>
+                <td class="border border-slate-800 p-1">
+                    <input type="number" value="${calcDa}" oninput="recalculateAll()" class="day-da-input w-full text-right font-bold bg-transparent">
+                </td>
+                <td class="border border-slate-800 p-1 text-right font-extrabold day-da-total">${calcDa.toFixed(2)}</td>
+                <td class="border border-slate-800 p-1 text-center no-print">
+                    <button onclick="removeEntireDay('${dayId}')" class="text-rose-600 hover:text-rose-800 text-xs font-bold" title="આખો દિવસ કાઢી નાખો">✕</button>
+                </td>
+            `;
+            tbody.appendChild(allowanceTr);
+
+            if (journeys.length > 0) {
+                journeys.forEach((j, idx) => addJourneyRow(dayId, j.from, j.out, j.to, j.in, j.veh, j.km, idx === 0 ? dateStr : ""));
+            } else {
+                addJourneyRow(dayId, "ગાંધીનગર", "10:00", "", "", "મોટર સાઈકલ", "", dateStr);
+            }
+            recalculateAll();
+            return dayId;
+        }
+
+        function addJourneyRow(dayId, from="", outTime="", to="", inTime="", veh="મોટર સાઈકલ", km="", dateVal="") {
+            const allowanceRow = document.getElementById(`${dayId}-allowance`);
+            const existingRows = document.querySelectorAll(`.${dayId}-row`);
+            const isFirst = existingRows.length === 0;
+
+            if (!from && existingRows.length > 0) {
+                const lastRow = existingRows[existingRows.length - 1];
+                from = lastRow.querySelector('.to-input').value || "";
+                outTime = lastRow.querySelector('.in-input').value || "";
+            }
+
+            const tr = document.createElement('tr');
+            tr.className = `journey-row ${dayId}-row hover:bg-slate-50`;
+            tr.dataset.dayid = dayId;
+            tr.innerHTML = `
+                <td class="border border-slate-800 p-1 text-center font-bold">
+                    ${isFirst ? `<input type="date" value="${dateVal}" onchange="recalculateAll()" class="day-date w-full text-center font-bold bg-transparent">` : ''}
+                </td>
+                <td class="border border-slate-800 p-1"><input type="text" list="village-list" value="${from}" oninput="recalculateAll()" placeholder="ગામ" class="from-input w-full px-1"></td>
+                <td class="border border-slate-800 p-1"><input type="time" value="${outTime}" onchange="recalculateAll()" class="out-input w-full text-center"></td>
+                <td class="border border-slate-800 p-1"><input type="text" list="village-list" value="${to}" oninput="recalculateAll()" placeholder="ગામ" class="to-input w-full px-1"></td>
+                <td class="border border-slate-800 p-1"><input type="time" value="${inTime}" onchange="recalculateAll()" class="in-input w-full text-center"></td>
+                <td class="border border-slate-800 p-1"><input type="text" value="${veh}" oninput="recalculateAll()" class="veh-input w-full text-center"></td>
+                <td class="border border-slate-800 p-1"><input type="number" value="${km}" oninput="recalculateAll()" placeholder="0" class="km-input w-full text-center font-bold bg-yellow-50 rounded"></td>
+                <td class="border border-slate-800 p-1"></td>
+                <td class="border border-slate-800 p-1 text-right font-bold fare-cell"></td>
+                <td class="border border-slate-800 p-1"></td>
+                <td class="border border-slate-800 p-1 text-right font-bold total-cell"></td>
+                <td class="border border-slate-800 p-1 text-center no-print">
+                    <button onclick="removeJourneyRow(this, '${dayId}')" class="text-slate-400 hover:text-rose-600 font-bold">✕</button>
+                </td>
+            `;
+            allowanceRow.parentNode.insertBefore(tr, allowanceRow);
+            recalculateAll();
+        }
+
+        function addReturnGandhinagar(dayId) {
+            const rows = document.querySelectorAll(`.${dayId}-row`);
+            let lastVillage = "";
+            let lastTime = "17:00";
+            if (rows.length > 0) {
+                const last = rows[rows.length - 1];
+                lastVillage = last.querySelector('.to-input').value;
+                lastTime = last.querySelector('.in-input').value || "17:00";
+            }
+            addJourneyRow(dayId, lastVillage, lastTime, "ગાંધીનગર", "18:00", "મોટર સાઈકલ", "");
+        }
+
+        function removeJourneyRow(btn, dayId) {
+            const rows = document.querySelectorAll(`.${dayId}-row`);
+            if (rows.length <= 1) {
+                removeEntireDay(dayId);
+                return;
+            }
+            const row = btn.closest('tr');
+            const dateInput = row.querySelector('.day-date');
+            const savedDate = dateInput ? dateInput.value : "";
+            row.remove();
+            if ( dateInput ) {
+                const newFirst = document.querySelector(`.${dayId}-row`);
+                if (newFirst) newFirst.cells[0].innerHTML = `<input type="date" value="${savedDate}" onchange="recalculateAll()" class="day-date w-full text-center font-bold bg-transparent">`;
+            }
+            recalculateAll();
+        }
+
+        function removeEntireDay(dayId) {
+            document.querySelectorAll(`.${dayId}-row`).forEach(r => r.remove());
+            document.getElementById(`${dayId}-allowance`)?.remove();
+            recalculateAll();
+        }
+
+        function onPctChange(selectEl) {
+            const fullDa = parseFloat(document.getElementById('full-da-rate').value) || 300;
+            const pct = parseInt(selectEl.value) || 0;
+            const daInput = selectEl.closest('tr').querySelector('.day-da-input');
+            daInput.value = Math.round((fullDa * pct) / 100);
+            recalculateAll();
+        }
+
+        function recalculateAll() {
+            const rate = parseFloat(document.getElementById('km-rate').value) || 2.5;
+            let totalKm = 0, totalFare = 0, totalDa = 0;
+
+            document.querySelectorAll('.journey-row').forEach(row => {
+                const km = parseFloat(row.querySelector('.km-input').value) || 0;
+                const fare = km * rate;
+                row.querySelector('.fare-cell').innerText = km > 0 ? fare.toFixed(2) : "";
+                row.querySelector('.total-cell').innerText = km > 0 ? fare.toFixed(2) : "";
+                totalKm += km;
+                totalFare += fare;
+            });
+
+            document.querySelectorAll('.day-da-input').forEach(input => {
+                const da = parseFloat(input.value) || 0;
+                input.closest('tr').querySelector('.day-da-total').innerText = da.toFixed(2);
+                totalDa += da;
+            });
+
+            const grand = totalFare + totalDa;
+            document.getElementById('bailiff-total-km').innerText = totalKm;
+            document.getElementById('bailiff-total-fare').innerText = totalFare.toFixed(2);
+            document.getElementById('bailiff-total-da').innerText = totalDa.toFixed(2);
+            document.getElementById('bailiff-grand-total').innerText = grand.toFixed(2);
+            syncBailiffToTA();
+        }
+
+        function syncBailiffToTA() {
+            document.getElementById('ta-emp-name-display').innerText = document.getElementById('bailiff-name').value || "____________________";
+            const taTbody = document.getElementById('ta-tbody');
+            taTbody.innerHTML = "";
+            const rate = parseFloat(document.getElementById('km-rate').value) || 2.5;
+            let grand = 0;
+
+            document.querySelectorAll('tr[id$="-allowance"]').forEach(allowRow => {
+                const dayId = allowRow.dataset.dayid;
+                const dateEl = document.querySelector(`.${dayId}-row .day-date`);
+                const dateStr = dateEl ? dateEl.value : "";
+
+                document.querySelectorAll(`.${dayId}-row`).forEach(r => {
+                    const from = r.querySelector('.from-input').value;
+                    const outT = r.querySelector('.out-input').value;
+                    const to = r.querySelector('.to-input').value;
+                    const inT = r.querySelector('.in-input').value;
+                    const veh = r.querySelector('.veh-input').value;
+                    const km = parseFloat(r.querySelector('.km-input').value) || 0;
+                    const fare = km * rate;
+                    if (from || to || km > 0) {
+                        grand += fare;
+                        taTbody.innerHTML += `
+                            <tr>
+                                <td class="border border-slate-800 p-1 font-semibold">${from}</td>
+                                <td class="border border-slate-800 p-1 text-center">${dateStr}</td>
+                                <td class="border border-slate-800 p-1 text-center">${outT}</td>
+                                <td class="border border-slate-800 p-1 font-semibold">${to}</td>
+                                <td class="border border-slate-800 p-1 text-center">${inT}</td>
+                                <td class="border border-slate-800 p-1 text-center">${veh}</td>
+                                <td class="border border-slate-800 p-1 text-center font-bold">${km}</td>
+                                <td class="border border-slate-800 p-1 text-right font-bold">${fare.toFixed(2)}</td>
+                            </tr>`;
+                    }
+                });
+
+                const da = parseFloat(allowRow.querySelector('.day-da-input').value) || 0;
+                const pct = allowRow.querySelector('.day-pct').value;
+                if (da > 0) {
+                    grand += da;
+                    taTbody.innerHTML += `
+                        <tr class="bg-slate-100 font-bold">
+                            <td colspan="6" class="border border-slate-800 p-1 text-right">દૈનિક ભથ્થું (Daily Allowance - ${pct}%) [${dateStr}]</td>
+                            <td class="border border-slate-800 p-1 text-center">${pct}%</td>
+                            <td class="border border-slate-800 p-1 text-right">${da.toFixed(2)}</td>
+                        </tr>`;
+                }
+            });
+
+            document.getElementById('ta-total-amount').innerText = grand.toFixed(2);
+            document.getElementById('gtr-domestic-amt').innerText = grand.toFixed(2);
+        }
+
+        function collectBillObject() {
+            const days = [];
+            document.querySelectorAll('tr[id$="-allowance"]').forEach(allowRow => {
+                const dayId = allowRow.dataset.dayid;
+                const dateEl = document.querySelector(`.${dayId}-row .day-date`);
+                const journeys = [];
+                document.querySelectorAll(`.${dayId}-row`).forEach(r => {
+                    journeys.push({
+                        from: r.querySelector('.from-input').value,
+                        out: r.querySelector('.out-input').value,
+                        to: r.querySelector('.to-input').value,
+                        in: r.querySelector('.in-input').value,
+                        veh: r.querySelector('.veh-input').value,
+                        km: r.querySelector('.km-input').value
+                    });
+                });
+                days.push({
+                    date: dateEl ? dateEl.value : "",
+                    pct: allowRow.querySelector('.day-pct').value,
+                    da: allowRow.querySelector('.day-da-input').value,
+                    journeys
+                });
+            });
+
+            return {
+                id: currentBillId || 'bill_' + Date.now(),
+                updatedAt: new Date().toLocaleString('gu-IN'),
+                courtTitle: document.getElementById('court-title').value,
+                bailiffName: document.getElementById('bailiff-name').value || "અનામી બેલીફ",
+                fromMonth: document.getElementById('from-month').value,
+                toMonth: document.getElementById('to-month').value,
+                basicPay: document.getElementById('basic-pay').value,
+                grandTotal: document.getElementById('bailiff-grand-total').innerText,
+                days
+            };
+        }
+
+        async function saveBillData() {
+            const bill = collectBillObject();
+            currentBillId = bill.id;
+
+            let list = JSON.parse(localStorage.getItem('bailiff_saved_bills') || '[]');
+            const idx = list.findIndex(b => b.id === bill.id);
+            if (idx >= 0) list[idx] = bill; else list.unshift(bill);
+            localStorage.setItem('bailiff_saved_bills', JSON.stringify(list));
+
+            if (db) {
+                try {
+                    await db.collection('bailiff_bills').doc(bill.id).set(bill);
+                } catch (e) { console.error(e); }
+            }
+            loadSavedBillsList();
+            alert(`✅ "${bill.bailiffName}" નું બિલ (કુલ ₹${bill.grandTotal}) સફળતાપૂર્વક સેવ થઈ ગયું છે!`);
+        }
+
+        async function loadSavedBillsList() {
+            let list = JSON.parse(localStorage.getItem('bailiff_saved_bills') || '[]');
+            if (db) {
+                try {
+                    const snap = await db.collection('bailiff_bills').get();
+                    const cloudBills = [];
+                    snap.forEach(doc => cloudBills.push(doc.data()));
+                    if (cloudBills.length > 0) {
+                        list = cloudBills;
+                        localStorage.setItem('bailiff_saved_bills', JSON.stringify(list));
+                    }
+                } catch (e) { console.error(e); }
+            }
+            document.getElementById('saved-count').innerText = list.length;
+            renderSavedBillsList();
+        }
+
+        function renderSavedBillsList() {
+            const list = JSON.parse(localStorage.getItem('bailiff_saved_bills') || '[]');
+            const q = (document.getElementById('search-bills')?.value || "").toLowerCase();
+            const container = document.getElementById('saved-bills-container');
+            container.innerHTML = "";
+
+            const filtered = list.filter(b => (b.bailiffName || "").toLowerCase().includes(q) || (b.fromMonth || "").includes(q));
+            if (filtered.length === 0) {
+                container.innerHTML = `<p class="text-xs text-slate-500 col-span-3 py-6 text-center">કોઈ સેવ કરેલું બિલ મળ્યું નથી.</p>`;
+                return;
+            }
+
+            filtered.forEach(b => {
+                container.innerHTML += `
+                    <div class="border border-slate-200 rounded-xl p-4 bg-slate-50 hover:shadow-md transition space-y-2">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h4 class="font-bold text-sm text-slate-900">${b.bailiffName}</h4>
+                                <p class="text-xs text-slate-500">માસ: ${b.fromMonth} થી ${b.toMonth}</p>
+                            </div>
+                            <span class="bg-emerald-100 text-emerald-800 font-extrabold text-xs px-2.5 py-1 rounded-full">₹${b.grandTotal}</span>
+                        </div>
+                        <p class="text-[11px] text-slate-400">છેલ્લો સુધારો: ${b.updatedAt}</p>
+                        <div class="flex gap-2 pt-2">
+                            <button onclick="openSavedBill('${b.id}')" class="flex-1 bg-sky-600 hover:bg-sky-700 text-white py-1.5 rounded-lg text-xs font-bold">બિલ ખોલો</button>
+                            <button onclick="deleteSavedBill('${b.id}')" class="bg-rose-100 hover:bg-rose-200 text-rose-700 px-3 py-1.5 rounded-lg text-xs font-bold">Delete</button>
+                        </div>
+                    </div>`;
+            });
+        }
+
+        function openSavedBill(id) {
+            const list = JSON.parse(localStorage.getItem('bailiff_saved_bills') || '[]');
+            const bill = list.find(b => b.id === id);
+            if (!bill) return;
+            loadBillObjectIntoForm(bill);
+            switchTab('bailiff');
+        }
+
+        function loadBillObjectIntoForm(bill) {
+            currentBillId = bill.id;
+            document.getElementById('court-title').value = bill.courtTitle || "";
+            document.getElementById('bailiff-name').value = bill.bailiffName || "";
+            document.getElementById('from-month').value = bill.fromMonth || "";
+            document.getElementById('to-month').value = bill.toMonth || "";
+            document.getElementById('basic-pay').value = bill.basicPay || "";
+            document.getElementById('bailiff-tbody').innerHTML = "";
+            (bill.days || []).forEach(d => addNewDayGroup(d.date, d.pct, d.da, d.journeys));
+            recalculateAll();
+        }
+
+        async function deleteSavedBill(id) {
+            if (!confirm("શું તમારે આ બિલ કાઢી નાખવું છે?")) return;
+            let list = JSON.parse(localStorage.getItem('bailiff_saved_bills') || '[]');
+            list = list.filter(b => b.id !== id);
+            localStorage.setItem('bailiff_saved_bills', JSON.stringify(list));
+            if (db) { try { await db.collection('bailiff_bills').doc(id).delete(); } catch(e){} }
+            loadSavedBillsList();
+        }
+
+        function resetNewBill() {
+            currentBillId = null;
+            document.getElementById('bailiff-name').value = "";
+            document.getElementById('bailiff-tbody').innerHTML = "";
+            addNewDayGroup(new Date().toISOString().split('T')[0], "30", 60, []);
+        }
+
+        function exportBackupFile() {
+            const bill = collectBillObject();
+            const blob = new Blob([JSON.stringify(bill, null, 2)], { type: "application/json" });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `TA_Bill_${bill.bailiffName}_${bill.fromMonth.replace('/','-')}.json`;
+            a.click();
+        }
+
+        function importBackupFile(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                const bill = JSON.parse(ev.target.result);
+                loadBillObjectIntoForm(bill);
+                saveBillData();
+            };
+            reader.readAsText(file);
+        }
+
+        function openCloudSetup() {
+            document.getElementById('firebase-config-input').value = localStorage.getItem('bailiff_fb_config') || "";
+            document.getElementById('cloud-modal').classList.remove('hidden');
+            document.getElementById('cloud-modal').classList.add('flex');
+        }
+
+        function saveFirebaseConfig() {
+            const val = document.getElementById('firebase-config-input').value.trim();
+            localStorage.setItem('bailiff_fb_config', val);
+            document.getElementById('cloud-modal').classList.add('hidden');
+            initCloudIfConfigured();
+        }
+
+        function initCloudIfConfigured() {
+            const raw = localStorage.getItem('bailiff_fb_config');
+            if (!raw) return;
+            try {
+                const cfg = JSON.parse(raw);
+                if (!firebase.apps.length) firebase.initializeApp(cfg);
+                db = firebase.firestore();
+                document.getElementById('cloud-status').innerText = "🟢 ઓનલાઈન ક્લાઉડ ડેટાબેઝ જોડાયેલ છે";
+                loadSavedBillsList();
+            } catch (e) {
+                alert("Firebase Config ખોટો છે. ફરી તપાસો.");
+            }
+        }
+
+        function loadDefaultData() {
+            addNewDayGroup("2025-07-01", "30", 60, [
+                { from: "ગાંધીનગર", out: "12:00", to: "હાઈકોર્ટ", in: "13:00", veh: "મોટર સાઈકલ", km: 22 },
+                { from: "હાઈકોર્ટ", out: "14:30", to: "ગાંધીનગર", in: "15:30", veh: "મોટર સાઈકલ", km: 22 }
+            ]);
+            addNewDayGroup("2025-07-02", "50", 150, [
+                { from: "ગાંધીનગર", out: "11:20", to: "માધવગઢ", in: "12:10", veh: "મોટર સાઈકલ", km: 24 },
+                { from: "માધવગઢ", out: "13:00", to: "સારાબપુરા", in: "13:30", veh: "મોટર સાઈકલ", km: 8 },
+                { from: "સારાબપુરા", out: "14:30", to: "ચંદ્રાળા", in: "15:00", veh: "મોટર સાઈકલ", km: 8 },
+                { from: "ચંદ્રાળા", out: "15:45", to: "મગોડી", in: "16:10", veh: "મોટર સાઈકલ", km: 14 },
+                { from: "મગોડી", out: "17:00", to: "પેથાપુર", in: "18:00", veh: "મોટર સાઈકલ", km: 22 },
+                { from: "પેથાપુર", out: "18:20", to: "ગાંધીનગર", in: "18:30", veh: "મોટર સાઈકલ", km: 8 }
+            ]);
+        }
+    </script>
+</body>
+</html>
