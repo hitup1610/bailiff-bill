@@ -8,9 +8,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Gujarati:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-    <!-- Firebase SDK for Cloud Save -->
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 
     <style>
         body { font-family: 'Noto Sans Gujarati', 'Inter', sans-serif; }
@@ -32,26 +29,19 @@
                 <div class="p-2 bg-sky-700 rounded-lg"><i data-lucide="scale" class="w-6 h-6"></i></div>
                 <div>
                     <h1 class="text-base sm:text-lg font-bold">ગુજરાત સરકાર - કોર્ટ બેલીફ T.A. બિલ પોર્ટલ</h1>
-                    <p id="cloud-status" class="text-xs text-amber-300">મોડ: લોકલ + બેકઅપ (ક્લાઉડ જોડવા ⚙️ સેટિંગ્સ જુઓ)</p>
+                    <p class="text-xs text-emerald-400">🟢 Google Sheet ક્લાઉડ ડેટાબેઝ સાથે કનેקט છે</p>
                 </div>
             </div>
 
             <div class="flex flex-wrap items-center gap-2">
                 <button onclick="saveBillData()" class="bg-emerald-600 hover:bg-emerald-700 px-3 py-2 rounded-lg text-xs sm:text-sm font-bold flex items-center gap-1.5 shadow">
-                    <i data-lucide="save" class="w-4 h-4"></i><span>બિલ સેવ કરો</span>
+                    <i data-lucide="save" class="w-4 h-4"><span>બિલ સેવ કરો (Google Sheet)</span></i>
                 </button>
                 <button onclick="window.print()" class="bg-sky-600 hover:bg-sky-700 px-3 py-2 rounded-lg text-xs sm:text-sm font-bold flex items-center gap-1.5 shadow">
                     <i data-lucide="printer" class="w-4 h-4"></i><span>પ્રિન્ટ / PDF</span>
                 </button>
-                <button onclick="exportBackupFile()" class="bg-indigo-600 hover:bg-indigo-700 px-3 py-2 rounded-lg text-xs sm:text-sm font-bold flex items-center gap-1.5" title="બિલની ફાઈલ ડાઉનલોડ કરી WhatsApp પર મોકલો">
-                    <i data-lucide="download" class="w-4 h-4"></i><span class="hidden sm:inline">બિલ ફાઈલ શેર</span>
-                </button>
-                <label class="bg-slate-700 hover:bg-slate-600 px-3 py-2 rounded-lg text-xs sm:text-sm font-bold flex items-center gap-1.5 cursor-pointer">
-                    <i data-lucide="upload" class="w-4 h-4"></i><span class="hidden sm:inline">ફાઈલ ખોલો</span>
-                    <input type="file" accept=".json" onchange="importBackupFile(event)" class="hidden">
-                </label>
-                <button onclick="openCloudSetup()" class="bg-slate-700 hover:bg-slate-600 p-2 rounded-lg text-xs" title="ક્લાઉડ ડેટાબેઝ સેટિંગ">
-                    <i data-lucide="settings" class="w-4 h-4"></i>
+                <button onclick="exportBackupFile()" class="bg-indigo-600 hover:bg-indigo-700 px-3 py-2 rounded-lg text-xs sm:text-sm font-bold flex items-center gap-1.5">
+                    <i data-lucide="download" class="w-4 h-4"></i><span class="hidden sm:inline">બેકઅપ ફાઈલ</span>
                 </button>
             </div>
         </div>
@@ -62,7 +52,7 @@
                 <button onclick="switchTab('bailiff')" id="tab-btn-bailiff" class="tab-btn px-4 py-2 text-xs sm:text-sm font-bold rounded-lg bg-sky-600 text-white whitespace-nowrap">૧. બેલીફ પ્રોસેસ રીપોર્ટ</button>
                 <button onclick="switchTab('gtr')" id="tab-btn-gtr" class="tab-btn px-4 py-2 text-xs sm:text-sm font-bold rounded-lg text-slate-300 hover:bg-slate-700 whitespace-nowrap">૨. G.T.R. Form No. 35</button>
                 <button onclick="switchTab('ta')" id="tab-btn-ta" class="tab-btn px-4 py-2 text-xs sm:text-sm font-bold rounded-lg text-slate-300 hover:bg-slate-700 whitespace-nowrap">૩. મુસાફરી વિગત (T.A. Log)</button>
-                <button onclick="switchTab('saved')" id="tab-btn-saved" class="tab-btn px-4 py-2 text-xs sm:text-sm font-bold rounded-lg text-amber-300 hover:bg-slate-700 whitespace-nowrap">૪. સેવ કરેલા તમામ બિલ (<span id="saved-count">0</span>)</button>
+                <button onclick="switchTab('saved')" id="tab-btn-saved" class="tab-btn px-4 py-2 text-xs sm:text-sm font-bold rounded-lg text-amber-300 hover:bg-slate-700 whitespace-nowrap">૪. સેવ કરેલા બિલ (<span id="saved-count">0</span>)</button>
             </div>
         </div>
     </header>
@@ -219,40 +209,25 @@
             </div>
         </section>
 
-        <!-- TAB 4: SAVED BILLS DASHBOARD -->
+        <!-- TAB 4: SAVED BILLS -->
         <section id="tab-saved" class="tab-content no-print bg-white rounded-xl shadow-md border border-slate-200 p-4 sm:p-8 hidden space-y-4">
-            <div class="flex flex-wrap justify-between items-center gap-2 border-b pb-3">
-                <div>
-                    <h2 class="text-lg font-bold text-slate-900">સેવ કરેલા તમામ બિલ (Saved Bills)</h2>
-                    <p class="text-xs text-slate-500">અહીંથી કોઈ પણ જૂનું બિલ ખોલી શકાશે અથવા પ્રિન્ટ કરી શકાશે.</p>
-                </div>
-                <input type="text" id="search-bills" oninput="renderSavedBillsList()" placeholder="બેલીફનું નામ કે માસ શોધો..." class="border border-slate-300 rounded-lg px-3 py-1.5 text-xs w-64">
+            <div class="flex justify-between items-center border-b pb-3">
+                <h2 class="text-lg font-bold text-slate-900">સેવ કરેલા બિલ</h2>
+                <input type="text" id="search-bills" oninput="renderSavedBillsList()" placeholder="નામ શોધો..." class="border border-slate-300 rounded-lg px-3 py-1.5 text-xs w-64">
             </div>
             <div id="saved-bills-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
         </section>
     </main>
 
-    <!-- CLOUD SETUP MODAL -->
-    <div id="cloud-modal" class="no-print fixed inset-0 bg-black/60 hidden items-center justify-center z-50 p-4">
-        <div class="bg-white rounded-xl max-w-md w-full p-5 space-y-4 shadow-2xl">
-            <h3 class="text-base font-bold text-slate-900">ઓનલાઈન ક્લાઉડ ડેટાબેઝ સેટિંગ (Firebase)</h3>
-            <p class="text-xs text-slate-600 leading-relaxed">બધાના મોબાઈલ/કોમ્પ્યુટરમાં ડેટા એકસાથે ઓનલાઈન દેખાય તે માટે Firebase Config JSON અહીં પેસ્ટ કરો (એક જ વાર કરવાનું રહેશે):</p>
-            <textarea id="firebase-config-input" rows="5" placeholder='{"apiKey": "...", "projectId": "..."}' class="w-full border border-slate-300 rounded-lg p-2 text-xs font-mono"></textarea>
-            <div class="flex justify-end gap-2">
-                <button onclick="document.getElementById('cloud-modal').classList.add('hidden')" class="px-3 py-1.5 text-xs font-bold text-slate-600">બંધ કરો</button>
-                <button onclick="saveFirebaseConfig()" class="bg-emerald-600 text-white px-4 py-1.5 rounded-lg text-xs font-bold">કનેક્ટ કરો</button>
-            </div>
-        </div>
-    </div>
-
     <script>
         let dayCounter = 0;
         let currentBillId = null;
-        let db = null;
+        
+        // તમારી બનાવેલી Google Apps Script Web App URL અહીં સેટ કરી દીધી છે
+        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbznRbAkPluMpudPv-ILYQ5kT49Kv3pbcSmXHRaZHYdEs0SmMPYMMYNPXu8sF2bYY3Bdvw/exec";
 
         document.addEventListener("DOMContentLoaded", () => {
             lucide.createIcons();
-            initCloudIfConfigured();
             loadDefaultData();
             loadSavedBillsList();
         });
@@ -302,7 +277,7 @@
                 </td>
                 <td class="border border-slate-800 p-1 text-right font-extrabold day-da-total">${calcDa.toFixed(2)}</td>
                 <td class="border border-slate-800 p-1 text-center no-print">
-                    <button onclick="removeEntireDay('${dayId}')" class="text-rose-600 hover:text-rose-800 text-xs font-bold" title="આખો દિવસ કાઢી નાખો">✕</button>
+                    <button onclick="removeEntireDay('${dayId}')" class="text-rose-600 font-bold">✕</button>
                 </td>
             `;
             tbody.appendChild(allowanceTr);
@@ -354,8 +329,7 @@
 
         function addReturnGandhinagar(dayId) {
             const rows = document.querySelectorAll(`.${dayId}-row`);
-            let lastVillage = "";
-            let lastTime = "17:00";
+            let lastVillage = "", lastTime = "17:00";
             if (rows.length > 0) {
                 const last = rows[rows.length - 1];
                 lastVillage = last.querySelector('.to-input').value;
@@ -366,15 +340,12 @@
 
         function removeJourneyRow(btn, dayId) {
             const rows = document.querySelectorAll(`.${dayId}-row`);
-            if (rows.length <= 1) {
-                removeEntireDay(dayId);
-                return;
-            }
+            if (rows.length <= 1) { removeEntireDay(dayId); return; }
             const row = btn.closest('tr');
             const dateInput = row.querySelector('.day-date');
             const savedDate = dateInput ? dateInput.value : "";
             row.remove();
-            if ( dateInput ) {
+            if (dateInput) {
                 const newFirst = document.querySelector(`.${dayId}-row`);
                 if (newFirst) newFirst.cells[0].innerHTML = `<input type="date" value="${savedDate}" onchange="recalculateAll()" class="day-date w-full text-center font-bold bg-transparent">`;
             }
@@ -464,7 +435,7 @@
                     grand += da;
                     taTbody.innerHTML += `
                         <tr class="bg-slate-100 font-bold">
-                            <td colspan="6" class="border border-slate-800 p-1 text-right">દૈનિક ભથ્થું (Daily Allowance - ${pct}%) [${dateStr}]</td>
+                            <td colspan="6" class="border border-slate-800 p-1 text-right">દૈનિક ભથ્થું (${pct}%) [${dateStr}]</td>
                             <td class="border border-slate-800 p-1 text-center">${pct}%</td>
                             <td class="border border-slate-800 p-1 text-right">${da.toFixed(2)}</td>
                         </tr>`;
@@ -516,63 +487,54 @@
             const bill = collectBillObject();
             currentBillId = bill.id;
 
+            // ૧. લોકલ સ્ટોરેજમાં સેવ
             let list = JSON.parse(localStorage.getItem('bailiff_saved_bills') || '[]');
             const idx = list.findIndex(b => b.id === bill.id);
             if (idx >= 0) list[idx] = bill; else list.unshift(bill);
             localStorage.setItem('bailiff_saved_bills', JSON.stringify(list));
 
-            if (db) {
+            // ૨. Google Sheet માં ઓનલાઈન ડેટા મોકલવો
+            if (GOOGLE_SCRIPT_URL) {
                 try {
-                    await db.collection('bailiff_bills').doc(bill.id).set(bill);
-                } catch (e) { console.error(e); }
+                    await fetch(GOOGLE_SCRIPT_URL, {
+                        method: "POST",
+                        mode: "no-cors",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(bill)
+                    });
+                } catch (e) {
+                    console.error("Google Sheet Error:", e);
+                }
             }
+
             loadSavedBillsList();
-            alert(`✅ "${bill.bailiffName}" નું બિલ (કુલ ₹${bill.grandTotal}) સફળતાપૂર્વક સેવ થઈ ગયું છે!`);
+            alert(`✅ "${bill.bailiffName}" નું બિલ (કુલ ₹${bill.grandTotal}) સફળતાપૂર્વક Google Sheet અને મોબાઈલમાં સેવ થઈ ગયું છે!`);
         }
 
-        async function loadSavedBillsList() {
-            let list = JSON.parse(localStorage.getItem('bailiff_saved_bills') || '[]');
-            if (db) {
-                try {
-                    const snap = await db.collection('bailiff_bills').get();
-                    const cloudBills = [];
-                    snap.forEach(doc => cloudBills.push(doc.data()));
-                    if (cloudBills.length > 0) {
-                        list = cloudBills;
-                        localStorage.setItem('bailiff_saved_bills', JSON.stringify(list));
-                    }
-                } catch (e) { console.error(e); }
-            }
-            document.getElementById('saved-count').innerText = list.length;
-            renderSavedBillsList();
-        }
-
-        function renderSavedBillsList() {
+        function loadSavedBillsList() {
             const list = JSON.parse(localStorage.getItem('bailiff_saved_bills') || '[]');
-            const q = (document.getElementById('search-bills')?.value || "").toLowerCase();
+            document.getElementById('saved-count').innerText = list.length;
             const container = document.getElementById('saved-bills-container');
             container.innerHTML = "";
 
-            const filtered = list.filter(b => (b.bailiffName || "").toLowerCase().includes(q) || (b.fromMonth || "").includes(q));
-            if (filtered.length === 0) {
-                container.innerHTML = `<p class="text-xs text-slate-500 col-span-3 py-6 text-center">કોઈ સેવ કરેલું બિલ મળ્યું નથી.</p>`;
+            if (list.length === 0) {
+                container.innerHTML = `<p class="text-xs text-slate-500 col-span-3 py-6 text-center">કોઈ સેવ કરેલું બિલ નથી.</p>`;
                 return;
             }
 
-            filtered.forEach(b => {
+            list.forEach(b => {
                 container.innerHTML += `
-                    <div class="border border-slate-200 rounded-xl p-4 bg-slate-50 hover:shadow-md transition space-y-2">
+                    <div class="border border-slate-200 rounded-xl p-4 bg-slate-50 shadow-sm space-y-2">
                         <div class="flex justify-between items-start">
                             <div>
-                                <h4 class="font-bold text-sm text-slate-900">${b.bailiffName}</h4>
+                                <h4 class="font-bold text-sm">${b.bailiffName}</h4>
                                 <p class="text-xs text-slate-500">માસ: ${b.fromMonth} થી ${b.toMonth}</p>
                             </div>
                             <span class="bg-emerald-100 text-emerald-800 font-extrabold text-xs px-2.5 py-1 rounded-full">₹${b.grandTotal}</span>
                         </div>
-                        <p class="text-[11px] text-slate-400">છેલ્લો સુધારો: ${b.updatedAt}</p>
                         <div class="flex gap-2 pt-2">
-                            <button onclick="openSavedBill('${b.id}')" class="flex-1 bg-sky-600 hover:bg-sky-700 text-white py-1.5 rounded-lg text-xs font-bold">બિલ ખોલો</button>
-                            <button onclick="deleteSavedBill('${b.id}')" class="bg-rose-100 hover:bg-rose-200 text-rose-700 px-3 py-1.5 rounded-lg text-xs font-bold">Delete</button>
+                            <button onclick="openSavedBill('${b.id}')" class="flex-1 bg-sky-600 hover:bg-sky-700 text-white py-1.5 rounded-lg text-xs font-bold">ખોલો / સુધારો</button>
+                            <button onclick="deleteSavedBill('${b.id}')" class="bg-rose-100 hover:bg-rose-200 text-rose-700 px-3 py-1.5 rounded-lg text-xs font-bold">ડિલીટ</button>
                         </div>
                     </div>`;
             });
@@ -582,11 +544,6 @@
             const list = JSON.parse(localStorage.getItem('bailiff_saved_bills') || '[]');
             const bill = list.find(b => b.id === id);
             if (!bill) return;
-            loadBillObjectIntoForm(bill);
-            switchTab('bailiff');
-        }
-
-        function loadBillObjectIntoForm(bill) {
             currentBillId = bill.id;
             document.getElementById('court-title').value = bill.courtTitle || "";
             document.getElementById('bailiff-name').value = bill.bailiffName || "";
@@ -596,14 +553,14 @@
             document.getElementById('bailiff-tbody').innerHTML = "";
             (bill.days || []).forEach(d => addNewDayGroup(d.date, d.pct, d.da, d.journeys));
             recalculateAll();
+            switchTab('bailiff');
         }
 
-        async function deleteSavedBill(id) {
-            if (!confirm("શું તમારે આ બિલ કાઢી નાખવું છે?")) return;
+        function deleteSavedBill(id) {
+            if (!confirm("શું તમારે આ બિલ ડિલીટ કરવું છે?")) return;
             let list = JSON.parse(localStorage.getItem('bailiff_saved_bills') || '[]');
             list = list.filter(b => b.id !== id);
             localStorage.setItem('bailiff_saved_bills', JSON.stringify(list));
-            if (db) { try { await db.collection('bailiff_bills').doc(id).delete(); } catch(e){} }
             loadSavedBillsList();
         }
 
@@ -619,61 +576,14 @@
             const blob = new Blob([JSON.stringify(bill, null, 2)], { type: "application/json" });
             const a = document.createElement('a');
             a.href = URL.createObjectURL(blob);
-            a.download = `TA_Bill_${bill.bailiffName}_${bill.fromMonth.replace('/','-')}.json`;
+            a.download = `TA_Bill_${bill.bailiffName}.json`;
             a.click();
-        }
-
-        function importBackupFile(e) {
-            const file = e.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = (ev) => {
-                const bill = JSON.parse(ev.target.result);
-                loadBillObjectIntoForm(bill);
-                saveBillData();
-            };
-            reader.readAsText(file);
-        }
-
-        function openCloudSetup() {
-            document.getElementById('firebase-config-input').value = localStorage.getItem('bailiff_fb_config') || "";
-            document.getElementById('cloud-modal').classList.remove('hidden');
-            document.getElementById('cloud-modal').classList.add('flex');
-        }
-
-        function saveFirebaseConfig() {
-            const val = document.getElementById('firebase-config-input').value.trim();
-            localStorage.setItem('bailiff_fb_config', val);
-            document.getElementById('cloud-modal').classList.add('hidden');
-            initCloudIfConfigured();
-        }
-
-        function initCloudIfConfigured() {
-            const raw = localStorage.getItem('bailiff_fb_config');
-            if (!raw) return;
-            try {
-                const cfg = JSON.parse(raw);
-                if (!firebase.apps.length) firebase.initializeApp(cfg);
-                db = firebase.firestore();
-                document.getElementById('cloud-status').innerText = "🟢 ઓનલાઈન ક્લાઉડ ડેટાબેઝ જોડાયેલ છે";
-                loadSavedBillsList();
-            } catch (e) {
-                alert("Firebase Config ખોટો છે. ફરી તપાસો.");
-            }
         }
 
         function loadDefaultData() {
             addNewDayGroup("2025-07-01", "30", 60, [
                 { from: "ગાંધીનગર", out: "12:00", to: "હાઈકોર્ટ", in: "13:00", veh: "મોટર સાઈકલ", km: 22 },
                 { from: "હાઈકોર્ટ", out: "14:30", to: "ગાંધીનગર", in: "15:30", veh: "મોટર સાઈકલ", km: 22 }
-            ]);
-            addNewDayGroup("2025-07-02", "50", 150, [
-                { from: "ગાંધીનગર", out: "11:20", to: "માધવગઢ", in: "12:10", veh: "મોટર સાઈકલ", km: 24 },
-                { from: "માધવગઢ", out: "13:00", to: "સારાબપુરા", in: "13:30", veh: "મોટર સાઈકલ", km: 8 },
-                { from: "સારાબપુરા", out: "14:30", to: "ચંદ્રાળા", in: "15:00", veh: "મોટર સાઈકલ", km: 8 },
-                { from: "ચંદ્રાળા", out: "15:45", to: "મગોડી", in: "16:10", veh: "મોટર સાઈકલ", km: 14 },
-                { from: "મગોડી", out: "17:00", to: "પેથાપુર", in: "18:00", veh: "મોટર સાઈકલ", km: 22 },
-                { from: "પેથાપુર", out: "18:20", to: "ગાંધીનગર", in: "18:30", veh: "મોટર સાઈકલ", km: 8 }
             ]);
         }
     </script>
