@@ -35,7 +35,7 @@
 
             <div class="flex flex-wrap items-center gap-2">
                 <button onclick="saveBillData()" class="bg-emerald-600 hover:bg-emerald-700 px-3 py-2 rounded-lg text-xs sm:text-sm font-bold flex items-center gap-1.5 shadow">
-                    <i data-lucide="save" class="w-4 h-4"><span>બિલ સેવ કરો (Google Sheet)</span></i>
+                    <i data-lucide="save" class="w-4 h-4"></i><span>બિલ સેવ કરો (Google Sheet)</span>
                 </button>
                 <button onclick="window.print()" class="bg-sky-600 hover:bg-sky-700 px-3 py-2 rounded-lg text-xs sm:text-sm font-bold flex items-center gap-1.5 shadow">
                     <i data-lucide="printer" class="w-4 h-4"></i><span>પ્રિન્ટ / PDF</span>
@@ -222,8 +222,6 @@
     <script>
         let dayCounter = 0;
         let currentBillId = null;
-        
-        // તમારી બનાવેલી Google Apps Script Web App URL અહીં સેટ કરી દીધી છે
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbznRbAkPluMpudPv-ILYQ5kT49Kv3pbcSmXHRaZHYdEs0SmMPYMMYNPXu8sF2bYY3Bdvw/exec";
 
         document.addEventListener("DOMContentLoaded", () => {
@@ -493,13 +491,13 @@
             if (idx >= 0) list[idx] = bill; else list.unshift(bill);
             localStorage.setItem('bailiff_saved_bills', JSON.stringify(list));
 
-            // ૨. Google Sheet માં ઓનલાઈન ડેટા મોકલવો
+            // ૨. Google Sheet માં મોકલવું (text/plain તરીકે જેથી ડેટા બ્લોક ન થાય)
             if (GOOGLE_SCRIPT_URL) {
                 try {
                     await fetch(GOOGLE_SCRIPT_URL, {
                         method: "POST",
                         mode: "no-cors",
-                        headers: { "Content-Type": "application/json" },
+                        headers: { "Content-Type": "text/plain;charset=utf-8" },
                         body: JSON.stringify(bill)
                     });
                 } catch (e) {
@@ -508,7 +506,7 @@
             }
 
             loadSavedBillsList();
-            alert(`✅ "${bill.bailiffName}" નું બિલ (કુલ ₹${bill.grandTotal}) સફળતાપૂર્વક Google Sheet અને મોબાઈલમાં સેવ થઈ ગયું છે!`);
+            alert(`✅ "${bill.bailiffName}" નું બિલ (કુલ ₹${bill.grandTotal}) સફળતાપૂર્વક Google Sheet માં સેવ થઈ ગયું છે!`);
         }
 
         function loadSavedBillsList() {
