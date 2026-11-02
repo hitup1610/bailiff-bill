@@ -198,7 +198,7 @@ body { font-family: 'Noto Sans Gujarati', 'Inter', sans-serif; color: #000; }
 
   <!-- PAGE 3: CERTIFICATE PAGE (COLUMNS 11 TO 17 - IMG_1683) -->
   <section id="tab-cert" class="tab-content page-break print-container bg-white rounded-xl shadow-md border border-slate-300 p-4 sm:p-8 hidden space-y-2">
-    <div class="space-y-1 text-xs font-semibold">
+    <div class="space-y-1.5 text-xs font-semibold">
       <div class="flex items-center"><span class="font-bold text-sm">Government Servant For the Month of</span><span id="cert-month-disp" class="border-b border-black flex-1 ml-2 px-2 font-bold"></span></div>
       <div class="flex items-center"><span class="w-16">Pay</span><span id="cert-pay-disp" class="border-b border-black w-48 text-center font-bold"></span><span class="ml-1 font-bold">₹</span></div>
       <div class="flex items-center"><span class="w-16">P. T. A.</span><span class="border-b border-black w-48"></span></div>
@@ -391,7 +391,7 @@ body { font-family: 'Noto Sans Gujarati', 'Inter', sans-serif; color: #000; }
 
 <script>
 let dayCounter = 0, currentBillId = null;
-const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbznRbAkPluMpudPv-ILYQ5kT49Kv3pbcSmXHRaZHYdEs0SmMPYMMYNPXu8sF2bYY3Bdvw/exec";
+const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwzfJA7wR-i1_aT2EVsqN6iEUD_bqECC-X0tWKfUxAQwcPQWSw0bmPOOAzsdEFj5Tgj9w/exec";
 
 document.addEventListener("DOMContentLoaded", () => {
   lucide.createIcons();
@@ -499,9 +499,9 @@ function addJourneyRow(dayId, from="", outTime="", to="", inTime="", veh="મો
   tr.innerHTML = `
     <td class="border border-black p-1 text-center font-bold">${isFirst ? `<input type="date" value="${dateVal}" onchange="recalculateAll()" class="day-date w-full text-center font-bold bg-transparent">` : ''}</td>
     <td class="border border-black p-1"><input type="text" list="village-list" value="${from}" oninput="recalculateAll()" class="from-input w-full px-1"></td>
-    <td class="border border-black p-1"><input type="time" value="${outTime}" onchange="recalculateAll()" class="out-input w-full text-center"></td>
+    <td class="border border-black p-1"><input type="time" value="${outTime}" oninput="recalculateAll()" class="out-input w-full text-center"></td>
     <td class="border border-black p-1"><input type="text" list="village-list" value="${to}" oninput="recalculateAll()" class="to-input w-full px-1"></td>
-    <td class="border border-black p-1"><input type="time" value="${inTime}" onchange="recalculateAll()" class="in-input w-full text-center"></td>
+    <td class="border border-black p-1"><input type="time" value="${inTime}" oninput="recalculateAll()" class="in-input w-full text-center"></td>
     <td class="border border-black p-1"><input type="text" value="${veh}" oninput="recalculateAll()" class="veh-input w-full text-center"></td>
     <td class="border border-black p-1"><input type="number" value="${km}" oninput="recalculateAll()" class="km-input w-full text-center font-bold bg-yellow-50"></td>
     <td class="border border-black p-1"></td>
