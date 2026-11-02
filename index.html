@@ -384,6 +384,11 @@ body { font-family: 'Noto Sans Gujarati', 'Inter', sans-serif; color: #000; }
   <!-- SAVED BILLS TAB -->
   <section id="tab-saved" class="tab-content no-print bg-white rounded-xl shadow-md border border-slate-200 p-4 hidden space-y-4">
     <h2 class="text-lg font-bold border-b pb-2">સેવ કરેલા તમામ બિલ</h2>
+    <div class="flex flex-wrap gap-2 items-center">
+      <input id="saved-search" type="search" oninput="loadSavedBillsList()" placeholder="નામ / મહિનો / તારીખથી શોધો..." class="border rounded-lg px-3 py-2 text-sm flex-1 min-w-[220px]">
+      <button onclick="syncFromGoogleSheet()" class="bg-sky-700 text-white rounded-lg px-3 py-2 text-sm font-bold">☁️ Google Sheetમાંથી રેકોર્ડ મેળવો</button>
+    </div>
+    <p id="sync-status" class="text-xs text-slate-500">આ ઉપકરણમાં સેવ થયેલા બિલ અહીં દેખાશે. બીજા ઉપકરણના રેકોર્ડ માટે Google Sheet Sync કરો.</p>
     <div id="saved-bills-container" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
   </section>
 
@@ -391,7 +396,8 @@ body { font-family: 'Noto Sans Gujarati', 'Inter', sans-serif; color: #000; }
 
 <script>
 let dayCounter = 0, currentBillId = null;
-const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwzfJA7wR-i1_aT2EVsqN6iEUD_bqECC-X0tWKfUxAQwcPQWSw0bmPOOAzsdEFj5Tgj9w/exec";
+// Deploy the companion Google Apps Script and paste its /exec URL here.
+const GOOGLE_SCRIPT_URL = "PASTE_YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL_HERE";
 
 document.addEventListener("DOMContentLoaded", () => {
   lucide.createIcons();
@@ -690,45 +696,110 @@ function collectBillObject() {
   };
 }
 
-async function saveBillData() {
-  const bill = collectBillObject();
-  currentBillId = bill.id;
-  let list = JSON.parse(localStorage.getItem('bailiff_saved_bills') || '[]');
+function getLocalBills() {
+  try { return JSON.parse(localStorage.getItem('bailiff_saved_bills') || '[]'); }
+  catch (e) { return []; }
+}
+function putLocalBill(bill) {
+  const list = getLocalBills();
   const idx = list.findIndex(b => b.id === bill.id);
   if (idx >= 0) list[idx] = bill; else list.unshift(bill);
   localStorage.setItem('bailiff_saved_bills', JSON.stringify(list));
-  if (GOOGLE_SCRIPT_URL) {
-    try {
-      await fetch(GOOGLE_SCRIPT_URL, { method: "POST", mode: "no-cors", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(bill) });
-    } catch (e) { console.error(e); }
-  }
-  loadSavedBillsList();
-  alert(`✅ "${bill.bailiffName}" નું આખું બિલ (કુલ ₹${bill.grandTotal}) Google Sheet માં સેવ થઈ ગયું છે!`);
 }
-
+function setSyncStatus(message, isError=false) {
+  const el = document.getElementById('sync-status');
+  if (el) { el.textContent = message; el.className = 'text-xs ' + (isError ? 'text-rose-700' : 'text-slate-500'); }
+}
+async function saveBillData() {
+  const bill = collectBillObject();
+  currentBillId = bill.id;
+  putLocalBill(bill);
+  loadSavedBillsList();
+  if (!GOOGLE_SCRIPT_URL || GOOGLE_SCRIPT_URL.includes("PASTE_YOUR")) {
+    setSyncStatus('બિલ આ ઉપકરણમાં સેવ થયું છે. Google Sheet Sync માટે Apps Script URL સેટ કરો.');
+    alert(`✅ "${bill.bailiffName}" નું બિલ આ ઉપકરણમાં સેવ થયું છે. Google Sheet માટે URL સેટ કરવો બાકી છે.`);
+    return;
+  }
+  try {
+    await fetch(GOOGLE_SCRIPT_URL, {
+      method: "POST", mode: "no-cors",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify(bill)
+    });
+    setSyncStatus('બિલ લોકલમાં સેવ થયું અને Google Sheet પર મોકલવાની વિનંતી મોકલાઈ. ખાતરી માટે "Google Sheetમાંથી રેકોર્ડ મેળવો" દબાવો.');
+    alert(`✅ "${bill.bailiffName}" નું બિલ આ ઉપકરણમાં સેવ થયું. Google Sheet Sync વિનંતી મોકલાઈ છે; Sync બટનથી રેકોર્ડ ચકાસો.`);
+  } catch (e) {
+    console.error(e);
+    setSyncStatus('Google Sheet સાથે જોડાણ ન થયું. લોકલ કોપી સુરક્ષિત છે; ઇન્ટરનેટ અને Apps Script URL તપાસો.', true);
+    alert('બિલ લોકલમાં સેવ છે, પરંતુ Google Sheet સાથે જોડાણ ન થયું.');
+  }
+}
+function syncFromGoogleSheet() {
+  if (!GOOGLE_SCRIPT_URL || GOOGLE_SCRIPT_URL.includes("PASTE_YOUR")) {
+    setSyncStatus('GOOGLE_SCRIPT_URL સેટ કરેલો નથી.', true);
+    return;
+  }
+  setSyncStatus('Google Sheetમાંથી બિલ મેળવાઈ રહ્યા છે...');
+  const callbackName = 'bailiffSheetCallback_' + Date.now();
+  const script = document.createElement('script');
+  const cleanup = () => { try { delete window[callbackName]; } catch(e) {} script.remove(); };
+  const timer = setTimeout(() => {
+    cleanup();
+    setSyncStatus('Google Sheetમાંથી જવાબ મળ્યો નથી. Apps Script deployment અને URL તપાસો.', true);
+  }, 15000);
+  window[callbackName] = (payload) => {
+    clearTimeout(timer); cleanup();
+    if (!payload || payload.ok !== true || !Array.isArray(payload.bills)) {
+      setSyncStatus('Google Sheet તરફથી યોગ્ય જવાબ મળ્યો નથી. આપેલ Apps Script કોડ deploy કરેલો છે તેની ખાતરી કરો.', true);
+      return;
+    }
+    const local = getLocalBills();
+    const byId = new Map(local.map(b => [b.id, b]));
+    payload.bills.forEach(b => byId.set(b.id, b));
+    const merged = Array.from(byId.values()).sort((a,b) => String(b.updatedAt||'').localeCompare(String(a.updatedAt||'')));
+    localStorage.setItem('bailiff_saved_bills', JSON.stringify(merged));
+    loadSavedBillsList();
+    setSyncStatus(`☁️ Google Sheetમાંથી ${payload.bills.length} બિલ મેળવ્યા. કુલ ${merged.length} બિલ ઉપલબ્ધ છે.`);
+  };
+  script.onerror = () => {
+    clearTimeout(timer); cleanup();
+    setSyncStatus('Google Sheet સાથે જોડાણ નિષ્ફળ. URL / deployment તપાસો.', true);
+  };
+  script.src = GOOGLE_SCRIPT_URL + (GOOGLE_SCRIPT_URL.includes('?') ? '&' : '?') +
+    'action=list&callback=' + encodeURIComponent(callbackName) + '&t=' + Date.now();
+  document.body.appendChild(script);
+}
 function loadSavedBillsList() {
-  const list = JSON.parse(localStorage.getItem('bailiff_saved_bills') || '[]');
+  const list = getLocalBills();
+  const query = (document.getElementById('saved-search')?.value || '').trim().toLocaleLowerCase();
+  const filtered = list.filter(b => [b.bailiffName, b.fromMonth, b.toMonth, b.updatedAt, b.id]
+    .some(v => String(v || '').toLocaleLowerCase().includes(query)));
   document.getElementById('saved-count').innerText = list.length;
   const container = document.getElementById('saved-bills-container');
   container.innerHTML = "";
-  list.forEach(b => {
-    container.innerHTML += `
-      <div class="border border-slate-300 rounded-xl p-4 bg-slate-50 space-y-2">
-        <div class="flex justify-between">
-          <div><h4 class="font-bold text-sm">${b.bailiffName}</h4><p class="text-xs text-slate-500">માસ: ${b.fromMonth} થી ${b.toMonth}</p></div>
-          <span class="bg-emerald-100 text-emerald-800 font-extrabold text-xs px-2 py-1 rounded">₹${b.grandTotal}</span>
-        </div>
-        <div class="flex gap-2 pt-2">
-          <button onclick="openSavedBill('${b.id}')" class="flex-1 bg-sky-600 text-white py-1 rounded text-xs font-bold">ખોલો</button>
-          <button onclick="deleteSavedBill('${b.id}')" class="bg-rose-100 text-rose-700 px-3 py-1 rounded text-xs font-bold">ડિલીટ</button>
-        </div>
-      </div>`;
+  if (!filtered.length) {
+    container.innerHTML = `<div class="col-span-full text-sm text-slate-500 border rounded-lg p-4">${query ? 'આ શોધ મુજબ કોઈ બિલ મળ્યું નથી.' : 'હજુ કોઈ બિલ સેવ નથી. નવું બિલ બનાવી "બિલ સેવ" દબાવો.'}</div>`;
+    return;
+  }
+  filtered.forEach(b => {
+    const card = document.createElement('div');
+    card.className = 'border border-slate-300 rounded-xl p-4 bg-slate-50 space-y-2';
+    const heading = document.createElement('h4'); heading.className = 'font-bold text-sm';
+    heading.textContent = b.bailiffName || 'નામ આપેલ નથી';
+    const sub = document.createElement('p'); sub.className = 'text-xs text-slate-500';
+    sub.textContent = `માસ: ${b.fromMonth || ''} થી ${b.toMonth || ''} | છેલ્લે સેવ: ${b.updatedAt || '-'}`;
+    const amount = document.createElement('p'); amount.className = 'text-sm font-extrabold text-emerald-800';
+    amount.textContent = `કુલ ₹${b.grandTotal || '0.00'}`;
+    const actions = document.createElement('div'); actions.className = 'flex gap-2 pt-2';
+    const open = document.createElement('button'); open.className = 'flex-1 bg-sky-600 text-white py-1 rounded text-xs font-bold';
+    open.textContent = 'ખોલો'; open.onclick = () => openSavedBill(b.id);
+    const del = document.createElement('button'); del.className = 'bg-rose-100 text-rose-700 px-3 py-1 rounded text-xs font-bold';
+    del.textContent = 'ડિલીટ'; del.onclick = () => deleteSavedBill(b.id);
+    actions.append(open, del); card.append(heading, sub, amount, actions); container.appendChild(card);
   });
 }
-
 function openSavedBill(id) {
-  const list = JSON.parse(localStorage.getItem('bailiff_saved_bills') || '[]');
-  const bill = list.find(b => b.id === id);
+  const bill = getLocalBills().find(b => b.id === id);
   if (!bill) return;
   currentBillId = bill.id;
   document.getElementById('court-title').value = bill.courtTitle || "";
@@ -739,49 +810,29 @@ function openSavedBill(id) {
   document.getElementById('proc-total').value = bill.procTotal || 195;
   document.getElementById('proc-served').value = bill.procServed || 181;
   document.getElementById('bailiff-tbody').innerHTML = "";
+  dayCounter = 0;
   (bill.days || []).forEach(d => addNewDayGroup(d.date, d.pct, d.da, d.journeys));
-  recalculateAll();
-  switchTab('bailiff');
+  recalculateAll(); switchTab('bailiff');
 }
-
 function deleteSavedBill(id) {
-  let list = JSON.parse(localStorage.getItem('bailiff_saved_bills') || '[]').filter(b => b.id !== id);
-  localStorage.setItem('bailiff_saved_bills', JSON.stringify(list));
+  if (!confirm('આ બિલ આ ઉપકરણની યાદીમાંથી કાઢી નાખવું છે? Google Sheetમાંથી તે આપમેળે ડિલીટ નહીં થાય.')) return;
+  localStorage.setItem('bailiff_saved_bills', JSON.stringify(getLocalBills().filter(b => b.id !== id)));
   loadSavedBillsList();
 }
-
 function resetNewBill() {
   currentBillId = null;
   document.getElementById('bailiff-name').value = "";
+  document.getElementById('from-month').value = "";
+  document.getElementById('to-month').value = "";
+  document.getElementById('basic-pay').value = "";
   document.getElementById('bailiff-tbody').innerHTML = "";
-  addNewDayGroup(new Date().toISOString().split('T')[0], "30", 90, []);
+  dayCounter = 0;
+  addNewDayGroup(new Date().toISOString().split('T')[0], "30", null, []);
+  recalculateAll(); switchTab('bailiff');
 }
-
 function loadDefaultPhotoData() {
-  addNewDayGroup("2024-11-07", "30", 90, [
-    { from: "ગાંધીનગર", out: "12:00", to: "હાઈકોર્ટ", in: "13:00", veh: "મોટર સાઈકલ", km: 22 },
-    { from: "હાઈકોર્ટ", out: "14:30", to: "ગાંધીનગર", in: "15:30", veh: "મોટર સાઈકલ", km: 22 }
-  ]);
-  addNewDayGroup("2024-11-08", "50", 150, [
-    { from: "ગાંધીનગર", out: "11:20", to: "માધવગઢ", in: "12:10", veh: "મોટર સાઈકલ", km: 28 },
-    { from: "માધવગઢ", out: "13:00", to: "સારાબપુરા", in: "13:30", veh: "મોટર સાઈકલ", km: 8 },
-    { from: "સારાબપુરા", out: "14:30", to: "ચંદ્રાળા", in: "15:00", veh: "મોટર સાઈકલ", km: 8 },
-    { from: "ચંદ્રાળા", out: "15:45", to: "મગોડી", in: "16:10", veh: "મોટર સાઈકલ", km: 14 },
-    { from: "મગોડી", out: "17:00", to: "પેથાપુર", in: "18:00", veh: "મોટર સાઈકલ", km: 22 },
-    { from: "પેથાપુર", out: "18:20", to: "ગાંધીનગર", in: "18:30", veh: "મોટર સાઈકલ", km: 8 }
-  ]);
-  addNewDayGroup("2024-11-12", "50", 150, [
-    { from: "ગાંધીનગર", out: "10:00", to: "માધવગઢ", in: "11:10", veh: "મોટર સાઈકલ", km: 28 },
-    { from: "માધવગઢ", out: "12:00", to: "હરીપુરા", in: "12:30", veh: "મોટર સાઈકલ", km: 10 },
-    { from: "હરીપુરા", out: "13:40", to: "ખારીયા", in: "14:00", veh: "મોટર સાઈકલ", km: 6 },
-    { from: "ખારીયા", out: "15:10", to: "મગોડી", in: "15:45", veh: "મોટર સાઈકલ", km: 14 },
-    { from: "મગોડી", out: "17:00", to: "પેથાપુર", in: "18:00", veh: "મોટર સાઈકલ", km: 22 },
-    { from: "પેથાપુર", out: "18:20", to: "ગાંધીનગર", in: "18:30", veh: "મોટર સાઈકલ", km: 8 }
-  ]);
-  addNewDayGroup("2024-11-16", "30", 90, [
-    { from: "ગાંધીનગર", out: "09:30", to: "હાઈકોર્ટ", in: "10:30", veh: "મોટર સાઈકલ", km: 22 },
-    { from: "હાઈકોર્ટ", out: "11:15", to: "ગાંધીનગર", in: "12:15", veh: "મોટર સાઈકલ", km: 22 }
-  ]);
+  // Start with a clean blank form; sample rows from the old demo are not inserted.
+  addNewDayGroup(new Date().toISOString().split('T')[0], "30", null, []);
 }
 </script>
 </body>
