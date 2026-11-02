@@ -11,7 +11,6 @@
     <style>
         body { font-family: 'Noto Sans Gujarati', 'Inter', sans-serif; color: #000; }
         
-        /* Box grid for GTR 35 Computer Input Data */
         .char-box {
             width: 22px;
             height: 24px;
@@ -32,17 +31,19 @@
             font-weight: 600;
         }
 
+        /* Landscape Print Support */
         @media print {
             .no-print { display: none !important; }
-            body { background: white !important; padding: 0 !important; margin: 0 !important; font-size: 10pt; }
+            body { background: white !important; padding: 0 !important; margin: 0 !important; font-size: 9.5pt; }
             .print-all-mode .tab-content { display: block !important; }
             .page-break { page-break-before: always; }
-            .print-container { width: 100% !important; max-width: 100% !important; box-shadow: none !important; border: none !important; margin: 0 !important; padding: 4px !important; }
+            .print-container { width: 100% !important; max-width: 100% !important; box-shadow: none !important; border: none !important; margin: 0 !important; padding: 2px !important; }
             input, select { border: none !important; background: transparent !important; appearance: none !important; -webkit-appearance: none !important; }
             .char-box { border: 1.5px solid #000 !important; }
             .underline-input { border-bottom: 1px solid #000 !important; }
         }
     </style>
+    <style id="page-orientation-style"></style>
 </head>
 <body class="h-full flex flex-col bg-slate-100">
 
@@ -53,18 +54,18 @@
                 <div class="p-2 bg-sky-600 rounded-lg"><i data-lucide="scale" class="w-6 h-6"></i></div>
                 <div>
                     <h1 class="text-base sm:text-lg font-bold">ગુજરાત સરકાર - કોર્ટ બેલીફ T.A. બિલ પોર્ટલ</h1>
-                    <p class="text-xs text-emerald-400">🟢 Google Sheet ઓનલાઈન ડેટાબેઝ કનેક્ટેડ</p>
+                    <p class="text-xs text-emerald-400">🟢 Google Sheet ઓનલાઈન સેવ + Landscape બંને પેજ કમ્બાઈન</p>
                 </div>
             </div>
 
             <div class="flex flex-wrap items-center gap-2">
-                <button onclick="saveBillData()" id="save-btn" class="bg-emerald-600 hover:bg-emerald-700 px-4 py-2 rounded-lg text-xs sm:text-sm font-bold flex items-center gap-1.5 shadow">
-                    <i data-lucide="save" class="w-4 h-4"></i><span>આખું બિલ સેવ કરો (Google Sheet)</span>
+                <button onclick="saveBillData()" class="bg-emerald-600 hover:bg-emerald-700 px-4 py-2 rounded-lg text-xs sm:text-sm font-bold flex items-center gap-1.5 shadow">
+                    <i data-lucide="save" class="w-4 h-4"></i><span>બિલ સેવ કરો (Google Sheet)</span>
                 </button>
-                <button onclick="printAllPages()" class="bg-amber-600 hover:bg-amber-700 px-3 py-2 rounded-lg text-xs sm:text-sm font-bold flex items-center gap-1.5 shadow">
-                    <i data-lucide="printer" class="w-4 h-4"></i><span>બધા પેજ પ્રિન્ટ (All Pages)</span>
+                <button onclick="printLandscapeCombined()" class="bg-amber-600 hover:bg-amber-700 px-3 py-2 rounded-lg text-xs sm:text-sm font-bold flex items-center gap-1.5 shadow">
+                    <i data-lucide="printer" class="w-4 h-4"></i><span>બંને પેજ Landscape પ્રિન્ટ</span>
                 </button>
-                <button onclick="printSinglePage()" class="bg-sky-600 hover:bg-sky-700 px-3 py-2 rounded-lg text-xs sm:text-sm font-bold">
+                <button onclick="printPortraitPage()" class="bg-sky-600 hover:bg-sky-700 px-3 py-2 rounded-lg text-xs sm:text-sm font-bold">
                     <span>ચાલુ પેજ પ્રિન્ટ</span>
                 </button>
             </div>
@@ -73,9 +74,9 @@
         <!-- TABS -->
         <div class="bg-slate-800 px-4 border-t border-slate-700">
             <div class="max-w-7xl mx-auto flex space-x-2 overflow-x-auto py-2">
-                <button onclick="switchTab('bailiff')" id="tab-btn-bailiff" class="tab-btn px-3 py-1.5 text-xs sm:text-sm font-bold rounded-lg bg-sky-600 text-white whitespace-nowrap">૧. બેલીફ પ્રોસેસ રીપોર્ટ</button>
-                <button onclick="switchTab('gtr')" id="tab-btn-gtr" class="tab-btn px-3 py-1.5 text-xs sm:text-sm font-bold rounded-lg text-slate-300 hover:bg-slate-700 whitespace-nowrap">૨. FORM G.T.R. No. 35 (Outer)</button>
-                <button onclick="switchTab('ta')" id="tab-btn-ta" class="tab-btn px-3 py-1.5 text-xs sm:text-sm font-bold rounded-lg text-slate-300 hover:bg-slate-700 whitespace-nowrap">૩. T.A. મુસાફરી પત્રક (Col 1-10)</button>
+                <button onclick="switchTab('bailiff')" id="tab-btn-bailiff" class="tab-btn px-3 py-1.5 text-xs sm:text-sm font-bold rounded-lg bg-sky-600 text-white whitespace-nowrap">૧. બેલીફ પ્રોસેસ રીપોર્ટ (એન્ટ્રી)</button>
+                <button onclick="switchTab('ta')" id="tab-btn-ta" class="tab-btn px-3 py-1.5 text-xs sm:text-sm font-bold rounded-lg text-slate-300 hover:bg-slate-700 whitespace-nowrap">૨. કમ્બાઈન T.A. બિલ (બંને પેજ Landscape)</button>
+                <button onclick="switchTab('gtr')" id="tab-btn-gtr" class="tab-btn px-3 py-1.5 text-xs sm:text-sm font-bold rounded-lg text-slate-300 hover:bg-slate-700 whitespace-nowrap">૩. FORM G.T.R. No. 35 (Outer)</button>
                 <button onclick="switchTab('saved')" id="tab-btn-saved" class="tab-btn px-3 py-1.5 text-xs sm:text-sm font-bold rounded-lg text-amber-300 hover:bg-slate-700 whitespace-nowrap">૪. સેવ કરેલા બિલ (<span id="saved-count">0</span>)</button>
             </div>
         </div>
@@ -87,13 +88,13 @@
         <option value="ખારીયા"><option value="કલોલ"><option value="દહેગામ"><option value="માણસા"><option value="અડાલજ">
     </datalist>
 
-    <main class="flex-1 max-w-7xl w-full mx-auto p-2 sm:p-6 space-y-6">
+    <main class="flex-1 max-w-[98%] w-full mx-auto p-2 sm:p-4 space-y-6">
 
         <!-- TOOLBAR -->
         <div class="no-print bg-white p-3 rounded-xl shadow-sm border border-slate-300 flex flex-wrap items-center justify-between gap-3 text-xs">
             <div class="flex flex-wrap items-center gap-4">
-                <label class="font-bold">કિ.મી. દર (₹):
-                    <input type="number" id="km-rate" value="2.5" step="0.5" oninput="recalculateAll()" class="w-16 border border-slate-400 rounded px-2 py-1 font-bold text-center ml-1">
+                <label class="font-bold">પ્રતિ કિ.મી. ભાડું (₹):
+                    <input type="number" id="km-rate" value="2.50" step="0.5" oninput="recalculateAll()" class="w-16 border border-slate-400 rounded px-2 py-1 font-bold text-center ml-1">
                 </label>
                 <label class="font-bold">૧૦૦% D.A. દર (₹):
                     <input type="number" id="full-da-rate" value="300" step="10" oninput="recalculateAll()" class="w-20 border border-slate-400 rounded px-2 py-1 font-bold text-center ml-1">
@@ -106,9 +107,9 @@
         </div>
 
         <!-- ======================================================= -->
-        <!-- PAGE 1: COURT BAILIFF PROCESS REPORT                    -->
+        <!-- TAB 1: COURT BAILIFF PROCESS REPORT                     -->
         <!-- ======================================================= -->
-        <section id="tab-bailiff" class="tab-content print-container bg-white rounded-xl shadow-md border border-slate-300 p-4 sm:p-8 space-y-5">
+        <section id="tab-bailiff" class="tab-content print-container bg-white rounded-xl shadow-md border border-slate-300 p-4 sm:p-6 space-y-5">
             <div class="text-center space-y-2 border-b-2 border-black pb-4">
                 <div class="flex items-center justify-center gap-2">
                     <span class="font-bold text-lg sm:text-xl">મે.</span>
@@ -118,9 +119,9 @@
                     આપ સાહેબશ્રીના કોર્ટના બેલીફ 
                     <input type="text" id="bailiff-name" placeholder="બેલીફનું નામ લખો" oninput="syncAllForms()" class="underline-input font-bold border-b border-black px-2 text-center min-w-[220px]">
                     નો નમ્રતાપુર્વક રીપોર્ટ કે, માહે 
-                    <input type="text" id="from-month" value="07/2025" oninput="syncAllForms()" class="underline-input font-bold border-b border-black w-24 text-center">
+                    <input type="text" id="from-month" value="11/2024" oninput="syncAllForms()" class="underline-input font-bold border-b border-black w-24 text-center">
                     થી માહે 
-                    <input type="text" id="to-month" value="07/2025" oninput="syncAllForms()" class="underline-input font-bold border-b border-black w-24 text-center">
+                    <input type="text" id="to-month" value="11/2024" oninput="syncAllForms()" class="underline-input font-bold border-b border-black w-24 text-center">
                     દરમિયાન અમો પ્રોસેસ બજાવવા સારુ ગયેલા. જેનો રીપોર્ટ નીચે મુજબ છે. મારે બેઝીક પગાર રૂ. 
                     <input type="number" id="basic-pay" value="25500" oninput="syncAllForms()" class="underline-input font-bold border-b border-black w-28 text-center">
                     પ્રતિ માસ છે.
@@ -129,7 +130,7 @@
 
             <div class="space-y-3">
                 <div class="flex justify-between items-center no-print">
-                    <h3 class="text-sm font-bold">પ્રોસેસ બજવણી મુસાફરી પત્રક</h3>
+                    <h3 class="text-sm font-bold">પ્રોસેસ બજવણી મુસાફરી પત્રક (અહીં વિગત ભરો એટલે બંને પેજ વાળું Landscape ફોર્મ આપોઆપ બની જશે)</h3>
                     <button onclick="addNewDayGroup()" class="bg-sky-700 hover:bg-sky-800 text-white px-3 py-1.5 rounded-lg text-xs font-bold shadow">+ નવી તારીખ / દિવસ ઉમેરો</button>
                 </div>
 
@@ -156,7 +157,7 @@
                             <tr class="bg-slate-200 font-bold text-sm">
                                 <td colspan="6" class="border border-black p-2 text-right">કુલ સરવાળો (Total):</td>
                                 <td id="bailiff-total-km" class="border border-black p-2 text-center">0</td>
-                                <td class="border border-black p-2 text-center">-</td>
+                                <td id="bailiff-total-pct" class="border border-black p-2 text-center">-</td>
                                 <td id="bailiff-total-fare" class="border border-black p-2 text-right">0.00</td>
                                 <td id="bailiff-total-da" class="border border-black p-2 text-right">0.00</td>
                                 <td id="bailiff-grand-total" class="border border-black p-2 text-right font-extrabold bg-slate-300">0.00</td>
@@ -173,12 +174,96 @@
             </div>
         </section>
 
+        <!-- ========================================================================= -->
+        <!-- TAB 2: COMBINED 2-PAGE LANDSCAPE SPREAD (IMG_1673 LEFT + IMG_1674 RIGHT)  -->
+        <!-- ========================================================================= -->
+        <section id="tab-ta" class="tab-content print-container bg-white rounded-xl shadow-md border border-slate-300 p-3 sm:p-6 hidden space-y-3">
+            
+            <!-- HEADER ACROSS BOTH PAGES -->
+            <div class="flex flex-wrap justify-between items-center border-b border-black pb-2">
+                <div>
+                    <h2 class="text-sm sm:text-base font-bold">Travelling allowance Bill of the Establishment/Gazetted</h2>
+                    <div class="flex flex-wrap gap-8 text-xs font-bold mt-1">
+                        <div>*NAME : <span id="ta-emp-name" class="underline font-extrabold"></span></div>
+                        <div>*DESIGNATION : <span id="ta-emp-desig" class="underline"></span></div>
+                        <div>BASIC PAY : Rs. <span id="ta-emp-pay" class="underline"></span></div>
+                    </div>
+                </div>
+                <div class="no-print">
+                    <button onclick="printLandscapeCombined()" class="bg-amber-600 hover:bg-amber-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold shadow flex items-center gap-1">
+                        <i data-lucide="printer" class="w-4 h-4"></i><span>આ બંને પેજ એક જ A4 Landscape માં પ્રિન્ટ કરો</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- COMBINED LEFT + RIGHT TABLE -->
+            <div class="overflow-x-auto">
+                <table class="w-full text-[11px] border-collapse border-2 border-black">
+                    <thead>
+                        <!-- TOP SUPER HEADER -->
+                        <tr class="border-b border-black text-center font-bold bg-slate-100">
+                            <th colspan="6" class="border border-black p-1">Particulars of Journeys and halts (ડાબું પેજ - મુસાફરી)</th>
+                            <th rowspan="3" class="border border-black p-1 w-24 align-bottom">Kind of<br>Journey<br>i.e. by Rail,<br>Steamer,<br>Road or<br>Trolley<br>7</th>
+                            <th colspan="3" class="border border-black p-1">Railway / Road Fare</th>
+                            <!-- RIGHT PAGE COLUMNS (IMG_1674) -->
+                            <th colspan="2" class="border border-black p-1 bg-amber-50/60">Halts / Daily Allowance<br>(જમણું પેજ - દૈનિક ભથ્થું)</th>
+                            <th rowspan="3" class="border border-black p-1 w-20 align-bottom bg-amber-50/60">Purpose of<br>Journey /<br>Remarks<br>13</th>
+                            <th rowspan="3" class="border border-black p-1 w-24 align-bottom bg-slate-200 font-extrabold">Total<br>Line Amount<br>(ભાડું + ભથ્થું)<br>14</th>
+                        </tr>
+                        <tr class="border-b border-black text-center font-semibold">
+                            <th colspan="3" class="border border-black p-1">Departure (પ્રસ્થાન)</th>
+                            <th colspan="3" class="border border-black p-1">Arrival (આગમન)</th>
+                            <th rowspan="2" class="border border-black p-1 w-12 align-bottom">Class<br>/ KM<br>8</th>
+                            <th rowspan="2" class="border border-black p-1 w-12 align-bottom">No. of<br>Fares<br>/ Rate<br>9</th>
+                            <th rowspan="2" class="border border-black p-1 w-20 align-bottom">Fare<br>Amount<br>(Rs.)<br>10</th>
+                            <th rowspan="2" class="border border-black p-1 w-16 align-bottom bg-amber-50/60">D.A.<br>Rate %<br>(ટકા)<br>11</th>
+                            <th rowspan="2" class="border border-black p-1 w-20 align-bottom bg-amber-50/60">D.A.<br>Amount<br>(ભથ્થું રૂ.)<br>12</th>
+                        </tr>
+                        <tr class="border-b-2 border-black font-semibold text-center">
+                            <th class="border border-black p-1">Station<br>1</th>
+                            <th class="border border-black p-1 w-20">Date<br>2</th>
+                            <th class="border border-black p-1 w-14">Hour<br>3</th>
+                            <th class="border border-black p-1">Station<br>4</th>
+                            <th class="border border-black p-1 w-20">Date<br>5</th>
+                            <th class="border border-black p-1 w-14">Hour<br>6</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ta-combined-tbody">
+                        <!-- Auto populated matching exact IMG_1673 + IMG_1674 row by row -->
+                    </tbody>
+                    <tfoot>
+                        <tr class="bg-slate-200 font-extrabold text-xs border-t-2 border-black">
+                            <td colspan="7" class="border border-black p-1.5 text-right">કુલ સરવાળો (Total Summary):</td>
+                            <td id="ta-sum-km" class="border border-black p-1.5 text-center">0</td>
+                            <td class="border border-black p-1.5 text-center">-</td>
+                            <td id="ta-sum-fare" class="border border-black p-1.5 text-right">0=00</td>
+                            <td id="ta-sum-pct" class="border border-black p-1.5 text-center bg-amber-100/70">0%</td>
+                            <td id="ta-sum-da" class="border border-black p-1.5 text-right bg-amber-100/70">0=00</td>
+                            <td class="border border-black p-1.5 text-center">-</td>
+                            <td id="ta-sum-grand" class="border border-black p-1.5 text-right bg-slate-300 text-sm">0=00</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+
+            <!-- FOOTER NOTES AS PER IMG_1673 BOTTOM -->
+            <div class="pt-2 flex flex-wrap justify-between items-end text-[10px] leading-tight">
+                <div class="space-y-0.5 max-w-2xl">
+                    <p>*In the case of Gazetted Government Servant</p>
+                    <p>Note: (1) In the case of Non-Gazetted Establishment similar particular of Name, Designation.</p>
+                    <p>(2) Please See, G.R.F.D., No. TJN-1071-2514-GH, Dated 15th June, 1971 and G.R.F.D.</p>
+                </div>
+                <div class="text-center font-bold text-xs pt-6 pr-8">
+                    <p>____________________________________</p>
+                    <p class="mt-1">Signature of Claimant / Bailiff</p>
+                </div>
+            </div>
+        </section>
+
         <!-- ======================================================= -->
-        <!-- PAGE 2: EXACT FORM G.T.R. No. 35 (AS PER IMAGE 1)       -->
+        <!-- TAB 3: EXACT FORM G.T.R. No. 35 (OUTER)                 -->
         <!-- ======================================================= -->
         <section id="tab-gtr" class="tab-content page-break print-container bg-white rounded-xl shadow-md border border-slate-300 p-4 sm:p-8 hidden space-y-3">
-            
-            <!-- TOP HEADER -->
             <div class="text-xs leading-snug">
                 <div class="flex justify-between font-bold">
                     <span>(G.P.V.)-1036-2,00,000-6-2017 A4* YP-BI</span>
@@ -201,19 +286,13 @@
                 </div>
             </div>
 
-            <!-- FOR USE IN TREASURY -->
             <div class="border-t-2 border-b-2 border-black py-2 space-y-2 text-xs">
                 <div class="text-center font-bold underline">(For Use in Treasury)</div>
                 <div class="flex items-center">
                     <span class="font-semibold">Name of the Treasury</span>
                     <input type="text" id="treasury-name" value="District Treasury Office, Gandhinagar" class="underline-input border-b border-black w-72 ml-2 px-1 font-bold">
                 </div>
-                <div class="space-y-1.5 pt-1">
-                    <div class="grid grid-cols-3 gap-2">
-                        <div>Bill Transit Reg. Sr. No. _________ Date _________</div>
-                        <div class="text-center">Token No. _________</div>
-                        <div class="text-right">Date _________</div>
-                    </div>
+                <div class="space-y-1 pt-1">
                     <div class="grid grid-cols-3 gap-2">
                         <div>Bill Transit Reg. Sr. No. _________ Date _________</div>
                         <div class="text-center">Token No. _________</div>
@@ -227,7 +306,6 @@
                 </div>
             </div>
 
-            <!-- COMPUTER INPUT DATA -->
             <div class="space-y-3 text-xs">
                 <div class="flex justify-between items-center">
                     <span class="w-1/3"></span>
@@ -235,7 +313,6 @@
                     <span class="text-right w-1/3">(To be filled in by Treasury)</span>
                 </div>
 
-                <!-- 1, 2, 3 ROW -->
                 <div class="grid grid-cols-2 gap-4 items-center">
                     <div class="flex items-center justify-between pr-8">
                         <span class="font-semibold">1. District</span>
@@ -253,56 +330,24 @@
                     </div>
                 </div>
 
-                <!-- SPLIT SECTION: LEFT (4 to 10) & RIGHT (BUDGET TABLE) -->
                 <div class="grid grid-cols-12 gap-4 pt-1">
-                    <!-- LEFT COLUMN (5 cols) -->
-                    <div class="col-span-12 md:col-span-5 space-y-2.5 border-t border-black pt-2">
-                        <div class="flex items-center justify-between">
-                            <span>4. Class of Expenditure</span>
-                            <input type="text" maxlength="1" class="char-box">
-                        </div>
-                        <div class="flex items-center justify-between">
-                            <span>5. Fund</span>
-                            <input type="text" maxlength="1" class="char-box">
-                        </div>
-                        <div class="flex items-center justify-between">
-                            <span>6. Drawing Officer</span>
-                            <div><input type="text" maxlength="1" class="char-box"><input type="text" maxlength="1" class="char-box"><input type="text" maxlength="1" class="char-box"></div>
-                        </div>
-                        <div class="flex items-center justify-between">
-                            <span>7. Demand No.</span>
-                            <div><input type="text" maxlength="1" class="char-box"><input type="text" maxlength="1" class="char-box"><input type="text" maxlength="1" class="char-box"></div>
-                        </div>
-                        <div class="flex items-center justify-between">
-                            <span>8. Type of Budget</span>
-                            <input type="text" maxlength="1" class="char-box">
-                        </div>
-                        <div class="flex items-center justify-between">
-                            <span>9. Scheme No.</span>
-                            <div><input type="text" maxlength="1" class="char-box"><input type="text" maxlength="1" class="char-box"><input type="text" maxlength="1" class="char-box"><input type="text" maxlength="1" class="char-box"><input type="text" maxlength="1" class="char-box"><input type="text" maxlength="1" class="char-box"><input type="text" maxlength="1" class="char-box"></div>
-                        </div>
+                    <div class="col-span-12 md:col-span-5 space-y-2 border-t border-black pt-2">
+                        <div class="flex items-center justify-between"><span>4. Class of Expenditure</span><input type="text" maxlength="1" class="char-box"></div>
+                        <div class="flex items-center justify-between"><span>5. Fund</span><input type="text" maxlength="1" class="char-box"></div>
+                        <div class="flex items-center justify-between"><span>6. Drawing Officer</span><div><input type="text" maxlength="1" class="char-box"><input type="text" maxlength="1" class="char-box"><input type="text" maxlength="1" class="char-box"></div></div>
+                        <div class="flex items-center justify-between"><span>7. Demand No.</span><div><input type="text" maxlength="1" class="char-box"><input type="text" maxlength="1" class="char-box"><input type="text" maxlength="1" class="char-box"></div></div>
+                        <div class="flex items-center justify-between"><span>8. Type of Budget</span><input type="text" maxlength="1" class="char-box"></div>
+                        <div class="flex items-center justify-between"><span>9. Scheme No.</span><div><input type="text" maxlength="1" class="char-box"><input type="text" maxlength="1" class="char-box"><input type="text" maxlength="1" class="char-box"><input type="text" maxlength="1" class="char-box"><input type="text" maxlength="1" class="char-box"><input type="text" maxlength="1" class="char-box"><input type="text" maxlength="1" class="char-box"></div></div>
                         <div class="space-y-1">
                             <div>10. Head Chargeable</div>
-                            <div>
-                                <input type="text" maxlength="1" class="char-box"><input type="text" maxlength="1" class="char-box"><input type="text" maxlength="1" class="char-box"><input type="text" maxlength="1" class="char-box"><input type="text" maxlength="1" class="char-box"><input type="text" maxlength="1" class="char-box"><input type="text" maxlength="1" class="char-box"><input type="text" maxlength="1" class="char-box"><input type="text" maxlength="1" class="char-box"><input type="text" maxlength="1" class="char-box"><input type="text" maxlength="1" class="char-box">
-                            </div>
+                            <div><input type="text" maxlength="1" class="char-box"><input type="text" maxlength="1" class="char-box"><input type="text" maxlength="1" class="char-box"><input type="text" maxlength="1" class="char-box"><input type="text" maxlength="1" class="char-box"><input type="text" maxlength="1" class="char-box"><input type="text" maxlength="1" class="char-box"><input type="text" maxlength="1" class="char-box"><input type="text" maxlength="1" class="char-box"><input type="text" maxlength="1" class="char-box"><input type="text" maxlength="1" class="char-box"></div>
                         </div>
-
-                        <div class="pt-3 space-y-1 text-xs">
-                            <div>Sector</div>
-                            <div>Demand No.</div>
-                            <div>Major Head</div>
-                            <div>Sub-Major Head:</div>
-                            <div>Minor Head</div>
-                            <div>Sub-Head</div>
-                            <div class="flex items-center justify-between">
-                                <span>Detailed Head</span>
-                                <div><input type="text" value="0" class="char-box"><input type="text" value="0" class="char-box"></div>
-                            </div>
+                        <div class="pt-2 space-y-1 text-xs">
+                            <div>Sector / Demand No. / Major Head</div>
+                            <div class="flex items-center justify-between"><span>Detailed Head</span><div><input type="text" value="0" class="char-box"><input type="text" value="0" class="char-box"></div></div>
                         </div>
                     </div>
 
-                    <!-- RIGHT COLUMN: BUDGET CODE TABLE (7 cols) -->
                     <div class="col-span-12 md:col-span-7">
                         <table class="w-full border-collapse border-2 border-black text-xs">
                             <thead>
@@ -318,40 +363,30 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr class="border-b border-black h-12">
-                                    <td class="border border-black text-center font-semibold">0105</td>
-                                    <td class="border border-black p-1">Leave Travel<br>Concession (Net)</td>
+                                <tr class="border-b border-black h-10">
+                                    <td class="border border-black text-center">0105</td>
+                                    <td class="border border-black p-1">Leave Travel Concession (Net)</td>
                                     <td class="edp-cell">0</td><td class="edp-cell">1</td><td class="edp-cell">0</td><td class="edp-cell">5</td><td class="edp-cell">+</td>
-                                    <td class="border border-black p-1 text-right"></td>
-                                    <td class="border border-black p-1 text-center"></td>
+                                    <td class="border border-black p-1"></td><td class="border border-black p-1"></td>
                                 </tr>
-                                <tr class="border-b border-black h-12 font-bold">
+                                <tr class="border-b border-black h-10 font-bold">
                                     <td class="border border-black text-center">1100</td>
-                                    <td class="border border-black p-1">Domestic Travel<br>Expenses (Net)</td>
+                                    <td class="border border-black p-1">Domestic Travel Expenses (Net)</td>
                                     <td class="edp-cell">1</td><td class="edp-cell">1</td><td class="edp-cell">0</td><td class="edp-cell">1</td><td class="edp-cell">+</td>
                                     <td id="gtr-dom-rs" class="border border-black p-1 text-right text-sm font-extrabold">0</td>
                                     <td class="border border-black p-1 text-center">00</td>
                                 </tr>
-                                <tr class="border-b border-black h-12">
-                                    <td class="border border-black text-center font-semibold">1200</td>
-                                    <td class="border border-black p-1">Foreign Travel Exp.<br>(Net)</td>
+                                <tr class="border-b border-black h-10">
+                                    <td class="border border-black text-center">1200</td>
+                                    <td class="border border-black p-1">Foreign Travel Exp. (Net)</td>
                                     <td class="edp-cell">1</td><td class="edp-cell">2</td><td class="edp-cell">0</td><td class="edp-cell">1</td><td class="edp-cell">+</td>
-                                    <td class="border border-black p-1 text-right"></td>
-                                    <td class="border border-black p-1 text-center"></td>
+                                    <td class="border border-black p-1"></td><td class="border border-black p-1"></td>
                                 </tr>
-                                <tr class="border-b border-black h-12">
-                                    <td class="border border-black text-center font-semibold">1100</td>
-                                    <td class="border border-black p-1">T.A./D.A. to non<br>Official Members<br>(Net)</td>
+                                <tr class="border-b border-black h-10">
+                                    <td class="border border-black text-center">1100</td>
+                                    <td class="border border-black p-1">T.A./D.A. to non Official Members</td>
                                     <td class="edp-cell">1</td><td class="edp-cell">1</td><td class="edp-cell">0</td><td class="edp-cell">2</td><td class="edp-cell">+</td>
-                                    <td class="border border-black p-1 text-right"></td>
-                                    <td class="border border-black p-1 text-center"></td>
-                                </tr>
-                                <tr class="h-14">
-                                    <td class="border border-black text-center font-semibold">1200</td>
-                                    <td class="border border-black p-1">T.A./D.A. to non<br>Official Members<br>going on tour<br>abroad</td>
-                                    <td class="edp-cell">1</td><td class="edp-cell">2</td><td class="edp-cell">0</td><td class="edp-cell">2</td><td class="edp-cell">+</td>
-                                    <td class="border border-black p-1 text-right"></td>
-                                    <td class="border border-black p-1 text-center"></td>
+                                    <td class="border border-black p-1"></td><td class="border border-black p-1"></td>
                                 </tr>
                             </tbody>
                         </table>
@@ -359,75 +394,10 @@
                 </div>
             </div>
 
-            <!-- FOR USE IN A.G.'S OFFICE -->
             <div class="pt-4 space-y-2 text-xs">
                 <div class="text-center font-bold underline">For Use in A. G.'s OFFICE</div>
-                <div class="space-y-1.5 pt-1">
-                    <div>Admitted for Rs. __________________________</div>
-                    <div>Objected for Rs. __________________________</div>
-                    <div>Reasons for Objection __________________________</div>
-                </div>
-                <div class="pt-8 flex justify-between font-bold text-xs">
-                    <span>AUDITOR</span>
-                    <span>S. O.</span>
-                    <span>G. O.</span>
-                </div>
-            </div>
-        </section>
-
-        <!-- ======================================================= -->
-        <!-- PAGE 3: EXACT T.A. INNER SHEET (COLUMNS 1 TO 10)        -->
-        <!-- ======================================================= -->
-        <section id="tab-ta" class="tab-content page-break print-container bg-white rounded-xl shadow-md border border-slate-300 p-4 sm:p-8 hidden space-y-4">
-            <div class="space-y-1">
-                <h2 class="text-sm sm:text-base font-bold">Travelling allowance Bill of the Establishment/Gazetted</h2>
-                <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 text-xs font-bold pt-1">
-                    <div>*NAME : <span id="ta-emp-name" class="underline font-extrabold"></span></div>
-                    <div>*DESIGNATION : <span id="ta-emp-desig" class="underline"></span></div>
-                    <div>BASIC PAY : Rs. <span id="ta-emp-pay" class="underline"></span></div>
-                </div>
-            </div>
-
-            <div class="overflow-x-auto">
-                <table class="w-full text-xs border-collapse border border-black">
-                    <thead>
-                        <tr class="border-b border-black text-left">
-                            <th colspan="6" class="border border-black p-1 font-semibold">Particulars of Journeys and halts</th>
-                            <th colspan="4" class="border border-black p-1 font-semibold">Railway __________ fare Steamer</th>
-                        </tr>
-                        <tr class="border-b border-black text-left font-semibold">
-                            <th colspan="3" class="border border-black p-1">Departure</th>
-                            <th colspan="3" class="border border-black p-1">Arrival</th>
-                            <th rowspan="2" class="border border-black p-1 w-28 align-bottom">Kind of<br>Journey<br>i.e. by<br>Rail<br>(Mail or<br>Passenger)<br>Steamer,<br>Road or<br>Trolley)<br>7</th>
-                            <th rowspan="2" class="border border-black p-1 w-16 align-bottom">Class<br>8</th>
-                            <th rowspan="2" class="border border-black p-1 w-16 align-bottom">No. of<br>Fares<br>9</th>
-                            <th rowspan="2" class="border border-black p-1 w-24 align-bottom">Amount<br>10</th>
-                        </tr>
-                        <tr class="border-b border-black font-semibold text-left">
-                            <th class="border border-black p-1">Station<br>1</th>
-                            <th class="border border-black p-1 w-24">Date<br>2</th>
-                            <th class="border border-black p-1 w-16">Hour<br>3</th>
-                            <th class="border border-black p-1">Station<br>4</th>
-                            <th class="border border-black p-1 w-24">Date<br>5</th>
-                            <th class="border border-black p-1 w-16">Hour<br>6</th>
-                        </tr>
-                    </thead>
-                    <tbody id="ta-tbody"></tbody>
-                    <tfoot>
-                        <tr class="bg-slate-200 font-bold text-sm">
-                            <td colspan="9" class="border border-black p-2 text-right">Total Amount (કુલ રકમ રૂ.):</td>
-                            <td id="ta-total-amount" class="border border-black p-2 text-right font-extrabold">0.00</td>
-                        </tr>
-                    </tfoot>
-                </table>
-            </div>
-
-            <div class="pt-6 space-y-6 text-xs">
-                <p>Certified that I was not provided with free conveyance or travel pass for any of the journeys for which travelling allowance has been claimed in this bill.</p>
-                <div class="flex justify-between items-end pt-8 font-bold">
-                    <div>Date: _______________<br>Station: Gandhinagar</div>
-                    <div class="text-center">____________________________________<br>Signature of Government Servant</div>
-                </div>
+                <div>Admitted for Rs. ____________________ | Objected for Rs. ____________________</div>
+                <div class="pt-6 flex justify-between font-bold"><span>AUDITOR</span><span>S. O.</span><span>G. O.</span></div>
             </div>
         </section>
 
@@ -448,12 +418,11 @@
 
         document.addEventListener("DOMContentLoaded", () => {
             lucide.createIcons();
-            loadDefaultData();
+            loadDefaultPhotoData();
             loadSavedBillsList();
         });
 
         function switchTab(tabId) {
-            document.body.classList.remove('print-all-mode');
             document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('bg-sky-600', 'text-white'));
             document.getElementById(`tab-${tabId}`).classList.remove('hidden');
@@ -461,15 +430,14 @@
             syncAllForms();
         }
 
-        function printAllPages() {
-            syncAllForms();
-            document.body.classList.add('print-all-mode');
+        function printLandscapeCombined() {
+            switchTab('ta');
+            document.getElementById('page-orientation-style').innerHTML = `@page { size: A4 landscape; margin: 6mm; }`;
             window.print();
-            setTimeout(() => document.body.classList.remove('print-all-mode'), 1000);
         }
 
-        function printSinglePage() {
-            document.body.classList.remove('print-all-mode');
+        function printPortraitPage() {
+            document.getElementById('page-orientation-style').innerHTML = `@page { size: A4 portrait; margin: 8mm; }`;
             window.print();
         }
 
@@ -599,7 +567,7 @@
 
         function recalculateAll() {
             const rate = parseFloat(document.getElementById('km-rate').value) || 2.5;
-            let totalKm = 0, totalFare = 0, totalDa = 0;
+            let totalKm = 0, totalFare = 0, totalDa = 0, totalPct = 0;
 
             document.querySelectorAll('.journey-row').forEach(row => {
                 const km = parseFloat(row.querySelector('.km-input').value) || 0;
@@ -610,24 +578,33 @@
                 totalFare += fare;
             });
 
-            document.querySelectorAll('.day-da-input').forEach(input => {
-                const da = parseFloat(input.value) || 0;
-                input.closest('tr').querySelector('.day-da-total').innerText = da.toFixed(2);
+            document.querySelectorAll('tr[id$="-allowance"]').forEach(allowRow => {
+                const da = parseFloat(allowRow.querySelector('.day-da-input').value) || 0;
+                const pct = parseInt(allowRow.querySelector('.day-pct').value) || 0;
+                allowRow.querySelector('.day-da-total').innerText = da.toFixed(2);
                 totalDa += da;
+                totalPct += pct;
             });
 
             const grand = totalFare + totalDa;
             document.getElementById('bailiff-total-km').innerText = totalKm;
+            document.getElementById('bailiff-total-pct').innerText = (totalPct / 100).toFixed(2) + "%";
             document.getElementById('bailiff-total-fare').innerText = totalFare.toFixed(2);
             document.getElementById('bailiff-total-da').innerText = totalDa.toFixed(2);
             document.getElementById('bailiff-grand-total').innerText = grand.toFixed(2);
             syncAllForms();
         }
 
+        // Builds the Combined 2-Page Landscape Table (IMG_1673 + IMG_1674 combined)
         function syncAllForms() {
             const bName = document.getElementById('bailiff-name').value || "____________________";
             const desig = document.getElementById('emp-designation').value || "બેલીફ";
             const pay = document.getElementById('basic-pay').value || "";
+            const rate = parseFloat(document.getElementById('km-rate').value) || 2.5;
+
+            const totalKm = document.getElementById('bailiff-total-km').innerText;
+            const totalFare = parseFloat(document.getElementById('bailiff-total-fare').innerText) || 0;
+            const totalDa = parseFloat(document.getElementById('bailiff-total-da').innerText) || 0;
             const grand = parseFloat(document.getElementById('bailiff-grand-total').innerText) || 0;
 
             document.getElementById('gtr-dom-rs').innerText = Math.round(grand);
@@ -635,16 +612,23 @@
             document.getElementById('ta-emp-desig').innerText = desig;
             document.getElementById('ta-emp-pay').innerText = pay;
 
-            const taTbody = document.getElementById('ta-tbody');
+            const taTbody = document.getElementById('ta-combined-tbody');
             taTbody.innerHTML = "";
-            const rate = parseFloat(document.getElementById('km-rate').value) || 2.5;
+            let totalPctSum = 0;
 
             document.querySelectorAll('tr[id$="-allowance"]').forEach(allowRow => {
                 const dayId = allowRow.dataset.dayid;
                 const dateEl = document.querySelector(`.${dayId}-row .day-date`);
-                const dateStr = dateEl ? dateEl.value : "";
+                const rawDate = dateEl ? dateEl.value : "";
+                // Format YYYY-MM-DD to DD/MM/YY as per handwritten register
+                let dispDate = rawDate;
+                if (rawDate && rawDate.includes('-')) {
+                    const parts = rawDate.split('-');
+                    dispDate = `${parts[2]}/${parts[1]}/${parts[0].slice(-2)}`;
+                }
 
-                document.querySelectorAll(`.${dayId}-row`).forEach(r => {
+                // 1) Render each journey row (Left Page data + Right Page Total column)
+                document.querySelectorAll(`.${dayId}-row`).forEach((r, idx) => {
                     const from = r.querySelector('.from-input').value;
                     const outT = r.querySelector('.out-input').value;
                     const to = r.querySelector('.to-input').value;
@@ -655,36 +639,55 @@
 
                     if (from || to || km > 0) {
                         taTbody.innerHTML += `
-                            <tr>
+                            <tr class="border-b border-slate-400">
                                 <td class="border border-black p-1">${from}</td>
-                                <td class="border border-black p-1 text-center">${dateStr}</td>
+                                <td class="border border-black p-1 text-center">${idx === 0 ? dispDate : ',,'}</td>
                                 <td class="border border-black p-1 text-center">${outT}</td>
                                 <td class="border border-black p-1">${to}</td>
-                                <td class="border border-black p-1 text-center">${dateStr}</td>
+                                <td class="border border-black p-1 text-center">${idx === 0 ? dispDate : ',,'}</td>
                                 <td class="border border-black p-1 text-center">${inT}</td>
-                                <td class="border border-black p-1 text-center">${veh} (Road)</td>
-                                <td class="border border-black p-1 text-center">${km} KM</td>
-                                <td class="border border-black p-1 text-center">1</td>
+                                <td class="border border-black p-1 text-center">${idx === 0 ? veh : ',,'}</td>
+                                <td class="border border-black p-1 text-center font-bold">${km}</td>
+                                <td class="border border-black p-1 text-center">${idx === 0 ? rate.toFixed(2) : ',,'}</td>
                                 <td class="border border-black p-1 text-right font-bold">${fare.toFixed(2)}</td>
+                                <!-- Right Page Empty D.A. cells on journey lines -->
+                                <td class="border border-black p-1 text-center bg-amber-50/30"></td>
+                                <td class="border border-black p-1 text-right bg-amber-50/30"></td>
+                                <td class="border border-black p-1 text-center bg-amber-50/30"></td>
+                                <td class="border border-black p-1 text-right font-bold bg-slate-50">${fare.toFixed(2)}</td>
                             </tr>`;
                     }
                 });
 
+                // 2) Render D.A. Line (Right Page 30% / 50% & DA Amount row as per IMG_1674)
                 const da = parseFloat(allowRow.querySelector('.day-da-input').value) || 0;
-                const pct = allowRow.querySelector('.day-pct').value;
-                if (da > 0) {
-                    taTbody.innerHTML += `
-                        <tr class="bg-slate-100 font-bold">
-                            <td colspan="6" class="border border-black p-1 text-right">દૈનિક ભથ્થું (Daily Allowance) - તા. ${dateStr}</td>
-                            <td class="border border-black p-1 text-center">Halt D.A.</td>
-                            <td class="border border-black p-1 text-center">-</td>
-                            <td class="border border-black p-1 text-center">${pct}%</td>
-                            <td class="border border-black p-1 text-right">${da.toFixed(2)}</td>
-                        </tr>`;
-                }
+                const pct = parseInt(allowRow.querySelector('.day-pct').value) || 0;
+                totalPctSum += pct;
+
+                taTbody.innerHTML += `
+                    <tr class="border-b-2 border-black font-bold bg-amber-50/60">
+                        <td class="border border-black p-1"></td>
+                        <td class="border border-black p-1"></td>
+                        <td class="border border-black p-1"></td>
+                        <td class="border border-black p-1"></td>
+                        <td class="border border-black p-1"></td>
+                        <td class="border border-black p-1"></td>
+                        <td class="border border-black p-1"></td>
+                        <td class="border border-black p-1"></td>
+                        <td class="border border-black p-1"></td>
+                        <td class="border border-black p-1"></td>
+                        <td class="border border-black p-1 text-center">${pct}%</td>
+                        <td class="border border-black p-1 text-right">${da.toFixed(2)}</td>
+                        <td class="border border-black p-1 text-center">પ્રોસેસ બજવણી</td>
+                        <td class="border border-black p-1 text-right">${da.toFixed(2)}</td>
+                    </tr>`;
             });
 
-            document.getElementById('ta-total-amount').innerText = grand.toFixed(2);
+            document.getElementById('ta-sum-km').innerText = totalKm;
+            document.getElementById('ta-sum-fare').innerText = totalFare.toFixed(2);
+            document.getElementById('ta-sum-pct').innerText = (totalPctSum / 100).toFixed(2) + " %";
+            document.getElementById('ta-sum-da').innerText = totalDa.toFixed(2);
+            document.getElementById('ta-sum-grand').innerText = grand.toFixed(2);
         }
 
         function collectBillObject() {
@@ -807,13 +810,34 @@
             currentBillId = null;
             document.getElementById('bailiff-name').value = "";
             document.getElementById('bailiff-tbody').innerHTML = "";
-            addNewDayGroup(new Date().toISOString().split('T')[0], "30", 60, []);
+            addNewDayGroup(new Date().toISOString().split('T')[0], "30", 90, []);
         }
 
-        function loadDefaultData() {
-            addNewDayGroup("2025-07-01", "30", 60, [
+        // Exact sample data from your uploaded photos IMG_1673 & IMG_1674 (660 Fare + 480 DA = 1140 Total)
+        function loadDefaultPhotoData() {
+            addNewDayGroup("2024-11-07", "30", 90, [
                 { from: "ગાંધીનગર", out: "12:00", to: "હાઈકોર્ટ", in: "13:00", veh: "મોટર સાઈકલ", km: 22 },
                 { from: "હાઈકોર્ટ", out: "14:30", to: "ગાંધીનગર", in: "15:30", veh: "મોટર સાઈકલ", km: 22 }
+            ]);
+            addNewDayGroup("2024-11-08", "50", 150, [
+                { from: "ગાંધીનગર", out: "11:20", to: "માધવગઢ", in: "12:10", veh: "મોટર સાઈકલ", km: 28 },
+                { from: "માધવગઢ", out: "13:00", to: "સારાબપુરા", in: "13:30", veh: "મોટર સાઈકલ", km: 8 },
+                { from: "સારાબપુરા", out: "14:30", to: "ચંદ્રાળા", in: "15:00", veh: "મોટર સાઈકલ", km: 8 },
+                { from: "ચંદ્રાળા", out: "15:45", to: "મગોડી", in: "16:10", veh: "મોટર સાઈકલ", km: 14 },
+                { from: "મગોડી", out: "17:00", to: "પેથાપુર", in: "18:00", veh: "મોટર સાઈકલ", km: 22 },
+                { from: "પેથાપુર", out: "18:20", to: "ગાંધીનગર", in: "18:30", veh: "મોટર સાઈકલ", km: 8 }
+            ]);
+            addNewDayGroup("2024-11-12", "50", 150, [
+                { from: "ગાંધીનગર", out: "10:00", to: "માધવગઢ", in: "11:10", veh: "મોટર સાઈકલ", km: 28 },
+                { from: "માધવગઢ", out: "12:00", to: "હરીપુરા", in: "12:30", veh: "મોટર સાઈકલ", km: 10 },
+                { from: "હરીપુરા", out: "13:40", to: "ખારીયા", in: "14:00", veh: "મોટર સાઈકલ", km: 6 },
+                { from: "ખારીયા", out: "15:10", to: "મગોડી", in: "15:45", veh: "મોટર સાઈકલ", km: 14 },
+                { from: "મગોડી", out: "17:00", to: "પેથાપુર", in: "18:00", veh: "મોટર સાઈકલ", km: 22 },
+                { from: "પેથાપુર", out: "18:20", to: "ગાંધીનગર", in: "18:30", veh: "મોટર સાઈકલ", km: 8 }
+            ]);
+            addNewDayGroup("2024-11-16", "30", 90, [
+                { from: "ગાંધીનગર", out: "09:30", to: "હાઈકોર્ટ", in: "10:30", veh: "મોટર સાઈકલ", km: 22 },
+                { from: "હાઈકોર્ટ", out: "11:15", to: "ગાંધીનગર", in: "12:15", veh: "મોટર સાઈકલ", km: 22 }
             ]);
         }
     </script>
