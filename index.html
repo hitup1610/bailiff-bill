@@ -31,7 +31,7 @@ body { font-family: 'Noto Sans Gujarati', 'Inter', sans-serif; color: #000; }
   <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-2">
     <div>
       <h1 class="text-base sm:text-lg font-bold">ગુજરાત સરકાર - કોર્ટ બેલીફ T.A. બિલ પોર્ટલ (સંપૂર્ણ 5 પેજ)</h1>
-      <p class="text-xs text-emerald-400">🟢 Google Sheet ઓનલાઈન સેવ + તમામ 5 સરકારી પેજ</p>
+      <p class="text-xs text-emerald-400">🟢 Office Portal • Google Sheets • Google Drive PDF Archive</p>
     </div>
     <div class="flex flex-wrap items-center gap-2">
       <button onclick="saveBillData()" class="bg-emerald-600 hover:bg-emerald-700 px-3 py-1.5 rounded-lg text-xs font-bold shadow">💾 બિલ સેવ (Google Sheet)</button>
@@ -386,9 +386,9 @@ body { font-family: 'Noto Sans Gujarati', 'Inter', sans-serif; color: #000; }
     <h2 class="text-lg font-bold border-b pb-2">સેવ કરેલા તમામ બિલ</h2>
     <div class="flex flex-wrap gap-2 items-center">
       <input id="saved-search" type="search" oninput="loadSavedBillsList()" placeholder="નામ / મહિનો / તારીખથી શોધો..." class="border rounded-lg px-3 py-2 text-sm flex-1 min-w-[220px]">
-      <button onclick="syncFromGoogleSheet()" class="bg-sky-700 text-white rounded-lg px-3 py-2 text-sm font-bold">☁️ Google Sheetમાંથી રેકોર્ડ મેળવો</button>
+      <button onclick="syncFromGoogleSheet()" class="bg-sky-700 text-white rounded-lg px-3 py-2 text-sm font-bold">☁️ રેકોર્ડ રિફ્રેશ કરો</button>
     </div>
-    <p id="sync-status" class="text-xs text-slate-500">આ ઉપકરણમાં સેવ થયેલા બિલ અહીં દેખાશે. બીજા ઉપકરણના રેકોર્ડ માટે Google Sheet Sync કરો.</p>
+    <p id="sync-status" class="text-xs text-slate-500">Officeના બધા અધિકૃત ઉપયોગકર્તાઓના બિલ અહીં દેખાશે.</p>
     <div id="saved-bills-container" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
   </section>
 
@@ -397,13 +397,14 @@ body { font-family: 'Noto Sans Gujarati', 'Inter', sans-serif; color: #000; }
 <script>
 let dayCounter = 0, currentBillId = null;
 // Deploy the companion Google Apps Script and paste its /exec URL here.
-const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwzfJA7wR-i1_aT2EVsqN6iEUD_bqECC-X0tWKfUxAQwcPQWSw0bmPOOAzsdEFj5Tgj9w/exec";
+// આ HTML Apps Script Web Appમાં index.html તરીકે ચાલે છે; URLની જરૂર નથી.
 
 document.addEventListener("DOMContentLoaded", () => {
   lucide.createIcons();
   loadDefaultPhotoData();
   calcProcessPct();
   loadSavedBillsList();
+  syncFromGoogleSheet();
 });
 
 function switchTab(tabId) {
@@ -710,64 +711,52 @@ function setSyncStatus(message, isError=false) {
   const el = document.getElementById('sync-status');
   if (el) { el.textContent = message; el.className = 'text-xs ' + (isError ? 'text-rose-700' : 'text-slate-500'); }
 }
-async function saveBillData() {
+
+function saveBillData() {
   const bill = collectBillObject();
+  if (!bill.bailiffName || bill.bailiffName === "અનામી બેલીફ") {
+    alert("કૃપા કરીને બેલીફનું નામ દાખલ કરો.");
+    return;
+  }
   currentBillId = bill.id;
-  putLocalBill(bill);
-  loadSavedBillsList();
-  if (!GOOGLE_SCRIPT_URL || GOOGLE_SCRIPT_URL.includes("PASTE_YOUR")) {
-    setSyncStatus('બિલ આ ઉપકરણમાં સેવ થયું છે. Google Sheet Sync માટે Apps Script URL સેટ કરો.');
-    alert(`✅ "${bill.bailiffName}" નું બિલ આ ઉપકરણમાં સેવ થયું છે. Google Sheet માટે URL સેટ કરવો બાકી છે.`);
-    return;
-  }
-  try {
-    await fetch(GOOGLE_SCRIPT_URL, {
-      method: "POST", mode: "no-cors",
-      headers: { "Content-Type": "text/plain;charset=utf-8" },
-      body: JSON.stringify(bill)
-    });
-    setSyncStatus('બિલ લોકલમાં સેવ થયું અને Google Sheet પર મોકલવાની વિનંતી મોકલાઈ. ખાતરી માટે "Google Sheetમાંથી રેકોર્ડ મેળવો" દબાવો.');
-    alert(`✅ "${bill.bailiffName}" નું બિલ આ ઉપકરણમાં સેવ થયું. Google Sheet Sync વિનંતી મોકલાઈ છે; Sync બટનથી રેકોર્ડ ચકાસો.`);
-  } catch (e) {
-    console.error(e);
-    setSyncStatus('Google Sheet સાથે જોડાણ ન થયું. લોકલ કોપી સુરક્ષિત છે; ઇન્ટરનેટ અને Apps Script URL તપાસો.', true);
-    alert('બિલ લોકલમાં સેવ છે, પરંતુ Google Sheet સાથે જોડાણ ન થયું.');
-  }
+  setSyncStatus("બિલ Google Sheetsમાં સેવ થઈ રહ્યું છે અને PDF તૈયાર થઈ રહ્યો છે...");
+  google.script.run
+    .withSuccessHandler(result => {
+      if (!result || result.ok !== true) {
+        setSyncStatus("બિલ સેવ કરવામાં સમસ્યા આવી: " + (result?.message || "અજ્ઞાત ભૂલ"), true);
+        alert("બિલ સેવ થઈ શક્યું નથી. ફરી પ્રયાસ કરો.");
+        return;
+      }
+      bill.pdfUrl = result.pdfUrl || "";
+      bill.updatedAt = result.updatedAt || bill.updatedAt;
+      putLocalBill(bill);
+      loadSavedBillsList();
+      setSyncStatus("✅ બિલ Google Sheetsમાં સેવ થયું અને Drive PDF તૈયાર છે. Bill ID: " + bill.id);
+      alert("બિલ સફળતાપૂર્વક સેવ થયું.\nBill ID: " + bill.id + (bill.pdfUrl ? "\nPDF પણ Google Driveમાં તૈયાર છે." : ""));
+    })
+    .withFailureHandler(error => {
+      setSyncStatus("સેવ નિષ્ફળ: " + (error?.message || error), true);
+      alert("બિલ સેવ થઈ શક્યું નથી. Office Google account અને deployment permission તપાસો.");
+    })
+    .saveBill(bill);
 }
+
 function syncFromGoogleSheet() {
-  if (!GOOGLE_SCRIPT_URL || GOOGLE_SCRIPT_URL.includes("PASTE_YOUR")) {
-    setSyncStatus('GOOGLE_SCRIPT_URL સેટ કરેલો નથી.', true);
-    return;
-  }
-  setSyncStatus('Google Sheetમાંથી બિલ મેળવાઈ રહ્યા છે...');
-  const callbackName = 'bailiffSheetCallback_' + Date.now();
-  const script = document.createElement('script');
-  const cleanup = () => { try { delete window[callbackName]; } catch(e) {} script.remove(); };
-  const timer = setTimeout(() => {
-    cleanup();
-    setSyncStatus('Google Sheetમાંથી જવાબ મળ્યો નથી. Apps Script deployment અને URL તપાસો.', true);
-  }, 15000);
-  window[callbackName] = (payload) => {
-    clearTimeout(timer); cleanup();
-    if (!payload || payload.ok !== true || !Array.isArray(payload.bills)) {
-      setSyncStatus('Google Sheet તરફથી યોગ્ય જવાબ મળ્યો નથી. આપેલ Apps Script કોડ deploy કરેલો છે તેની ખાતરી કરો.', true);
-      return;
-    }
-    const local = getLocalBills();
-    const byId = new Map(local.map(b => [b.id, b]));
-    payload.bills.forEach(b => byId.set(b.id, b));
-    const merged = Array.from(byId.values()).sort((a,b) => String(b.updatedAt||'').localeCompare(String(a.updatedAt||'')));
-    localStorage.setItem('bailiff_saved_bills', JSON.stringify(merged));
-    loadSavedBillsList();
-    setSyncStatus(`☁️ Google Sheetમાંથી ${payload.bills.length} બિલ મેળવ્યા. કુલ ${merged.length} બિલ ઉપલબ્ધ છે.`);
-  };
-  script.onerror = () => {
-    clearTimeout(timer); cleanup();
-    setSyncStatus('Google Sheet સાથે જોડાણ નિષ્ફળ. URL / deployment તપાસો.', true);
-  };
-  script.src = GOOGLE_SCRIPT_URL + (GOOGLE_SCRIPT_URL.includes('?') ? '&' : '?') +
-    'action=list&callback=' + encodeURIComponent(callbackName) + '&t=' + Date.now();
-  document.body.appendChild(script);
+  setSyncStatus("Google Sheetsમાંથી બિલ મેળવાઈ રહ્યા છે...");
+  google.script.run
+    .withSuccessHandler(result => {
+      if (!result || result.ok !== true || !Array.isArray(result.bills)) {
+        setSyncStatus("Google Sheets તરફથી યોગ્ય જવાબ મળ્યો નથી.", true);
+        return;
+      }
+      localStorage.setItem("bailiff_saved_bills", JSON.stringify(result.bills));
+      loadSavedBillsList();
+      setSyncStatus("☁️ Google Sheetsમાંથી " + result.bills.length + " બિલ ઉપલબ્ધ છે.");
+    })
+    .withFailureHandler(error => {
+      setSyncStatus("રેકોર્ડ મેળવવામાં નિષ્ફળ: " + (error?.message || error), true);
+    })
+    .getBills();
 }
 function loadSavedBillsList() {
   const list = getLocalBills();
@@ -793,9 +782,17 @@ function loadSavedBillsList() {
     const actions = document.createElement('div'); actions.className = 'flex gap-2 pt-2';
     const open = document.createElement('button'); open.className = 'flex-1 bg-sky-600 text-white py-1 rounded text-xs font-bold';
     open.textContent = 'ખોલો'; open.onclick = () => openSavedBill(b.id);
+    if (b.pdfUrl) {
+      const pdf = document.createElement('button');
+      pdf.className = 'bg-emerald-100 text-emerald-800 px-3 py-1 rounded text-xs font-bold';
+      pdf.textContent = 'PDF જુઓ';
+      pdf.onclick = () => window.open(b.pdfUrl, '_blank');
+      actions.append(pdf);
+    }
     const del = document.createElement('button'); del.className = 'bg-rose-100 text-rose-700 px-3 py-1 rounded text-xs font-bold';
     del.textContent = 'ડિલીટ'; del.onclick = () => deleteSavedBill(b.id);
-    actions.append(open, del); card.append(heading, sub, amount, actions); container.appendChild(card);
+    actions.prepend(open); actions.append(del);
+    card.append(heading, sub, amount, actions); container.appendChild(card);
   });
 }
 function openSavedBill(id) {
@@ -815,9 +812,20 @@ function openSavedBill(id) {
   recalculateAll(); switchTab('bailiff');
 }
 function deleteSavedBill(id) {
-  if (!confirm('આ બિલ આ ઉપકરણની યાદીમાંથી કાઢી નાખવું છે? Google Sheetમાંથી તે આપમેળે ડિલીટ નહીં થાય.')) return;
-  localStorage.setItem('bailiff_saved_bills', JSON.stringify(getLocalBills().filter(b => b.id !== id)));
-  loadSavedBillsList();
+  if (!confirm('આ બિલ Google Sheets અને તેની Drive PDF archiveમાંથી કાયમી કાઢી નાખવું છે?')) return;
+  setSyncStatus("બિલ ડિલીટ થઈ રહ્યું છે...");
+  google.script.run
+    .withSuccessHandler(result => {
+      if (!result || result.ok !== true) {
+        setSyncStatus("ડિલીટ નિષ્ફળ: " + (result?.message || ""), true);
+        return;
+      }
+      localStorage.setItem("bailiff_saved_bills", JSON.stringify(getLocalBills().filter(b => b.id !== id)));
+      loadSavedBillsList();
+      setSyncStatus("બિલ અને તેની PDF archive કાઢી નાખવામાં આવી.");
+    })
+    .withFailureHandler(error => setSyncStatus("ડિલીટ નિષ્ફળ: " + (error?.message || error), true))
+    .deleteBill(id);
 }
 function resetNewBill() {
   currentBillId = null;
