@@ -7,8 +7,20 @@
 <script src="https://cdn.tailwindcss.com"></script>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Gujarati:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://unpkg.com/lucide@latest"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
 body { font-family: 'Noto Sans Gujarati', 'Inter', sans-serif; color: #000; }
+/* PDF table readability: village names slightly larger; times stay unchanged */
+.pdf-render-root .from-input, .pdf-render-root .to-input,
+.pdf-render-root .village-cell { font-size: 12.5px !important; }
+.pdf-render-root .out-input, .pdf-render-root .in-input,
+.pdf-render-root .day-date { font-size: inherit !important; }
+/* No underline beneath ordinary table data */
+.pdf-render-root .pdf-no-line { border-bottom: 0 !important; text-decoration: none !important; }
+.pdf-render-root td input:not(.underline-input),
+.pdf-render-root td select:not(.underline-input),
+.pdf-render-root td textarea:not(.underline-input) { text-decoration: none !important; border-bottom: 0 !important; }
 .char-box { width: 20px; height: 22px; border: 1.5px solid #000; text-align: center; font-weight: 700; font-size: 11px; display: inline-block; margin-right: -1.5px; background: #fff; }
 .edp-cell { width: 20px; text-align: center; border-left: 1px solid #000; border-right: 1px solid #000; font-weight: 600; }
 .col-11-17-grid { background-image: linear-gradient(to right, transparent 13.5%, #000 13.5%, #000 13.7%, transparent 13.7%, transparent 27%, #000 27%, #000 27.2%, transparent 27.2%, transparent 41%, #000 41%, #000 41.2%, transparent 41.2%, transparent 55%, #000 55%, #000 55.2%, transparent 55.2%, transparent 69%, #000 69%, #000 69.2%, transparent 69.2%, transparent 79%, #000 79%, #000 79.2%, transparent 79.2%, transparent 84%, #000 84%, #000 84.2%, transparent 84.2%); }
@@ -16,7 +28,11 @@ body { font-family: 'Noto Sans Gujarati', 'Inter', sans-serif; color: #000; }
   .no-print { display: none !important; }
   body { background: white !important; padding: 0 !important; margin: 0 !important; font-size: 9.5pt; }
   .print-all-mode .tab-content { display: block !important; }
+  body:not(.print-all-mode) .tab-content { display: none !important; }
+  body:not(.print-all-mode) .tab-content:not(.hidden) { display: block !important; }
   .page-break { page-break-before: always; }
+  #tab-ta { page-break-before: always; }
+  .pdf-render-root { position: fixed; left: -20000px; top: 0; z-index: -1; background: #fff; }
   .print-container { width: 100% !important; max-width: 100% !important; box-shadow: none !important; border: none !important; margin: 0 !important; padding: 4px !important; }
   input, select { border: none !important; background: transparent !important; appearance: none !important; -webkit-appearance: none !important; }
   .char-box { border: 1.5px solid #000 !important; }
@@ -31,7 +47,7 @@ body { font-family: 'Noto Sans Gujarati', 'Inter', sans-serif; color: #000; }
   <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-2">
     <div>
       <h1 class="text-base sm:text-lg font-bold">ગુજરાત સરકાર - કોર્ટ બેલીફ T.A. બિલ પોર્ટલ (સંપૂર્ણ 5 પેજ)</h1>
-      <p class="text-xs text-emerald-400">🟢 Office Portal • Google Sheets • Google Drive PDF Archive</p>
+      <p class="text-xs text-emerald-400">🟢 Google Sheet ઓનલાઈન સેવ + તમામ 5 સરકારી પેજ</p>
     </div>
     <div class="flex flex-wrap items-center gap-2">
       <button onclick="saveBillData()" class="bg-emerald-600 hover:bg-emerald-700 px-3 py-1.5 rounded-lg text-xs font-bold shadow">💾 બિલ સેવ (Google Sheet)</button>
@@ -154,6 +170,7 @@ body { font-family: 'Noto Sans Gujarati', 'Inter', sans-serif; color: #000; }
             <th colspan="6" class="border border-black p-1">Particulars of Journeys and halts</th>
             <th rowspan="3" class="border border-black p-1 w-24 align-bottom">Kind of<br>Journey<br>i.e. by Rail,<br>Steamer,<br>Road or<br>Trolley<br>7</th>
             <th colspan="3" class="border border-black p-1">Railway / Road Fare</th>
+            <th colspan="2" class="border border-black p-1">Distance travelled by road / trolley</th>
             <th colspan="2" class="border border-black p-1 bg-amber-50/60">Halts / Daily Allowance</th>
             <th rowspan="3" class="border border-black p-1 w-20 align-bottom bg-amber-50/60">Purpose of<br>Journey<br>15</th>
             <th rowspan="3" class="border border-black p-1 w-24 align-bottom bg-slate-200 font-extrabold">Total of<br>each line<br>16</th>
@@ -164,6 +181,8 @@ body { font-family: 'Noto Sans Gujarati', 'Inter', sans-serif; color: #000; }
             <th rowspan="2" class="border border-black p-1 w-12 align-bottom">Class<br>8</th>
             <th rowspan="2" class="border border-black p-1 w-12 align-bottom">No. of<br>Fares<br>9</th>
             <th rowspan="2" class="border border-black p-1 w-20 align-bottom">Amount<br>10</th>
+            <th rowspan="2" class="border border-black p-1 w-16 align-bottom">Ordinary<br>rates<br>11</th>
+            <th rowspan="2" class="border border-black p-1 w-16 align-bottom">Other<br>rates<br>12</th>
             <th rowspan="2" class="border border-black p-1 w-16 align-bottom bg-amber-50/60">D.A. %<br>13</th>
             <th rowspan="2" class="border border-black p-1 w-20 align-bottom bg-amber-50/60">D.A. Rs.<br>14</th>
           </tr>
@@ -180,13 +199,15 @@ body { font-family: 'Noto Sans Gujarati', 'Inter', sans-serif; color: #000; }
         <tfoot>
           <tr class="bg-slate-200 font-extrabold text-xs border-t-2 border-black">
             <td colspan="7" class="border border-black p-1.5 text-right">કુલ સરવાળો (Total):</td>
+            <td class="border border-black p-1.5 text-center">-</td>
+            <td class="border border-black p-1.5 text-center">-</td>
+            <td id="ta-sum-fare" class="border border-black p-1.5 text-right">0.00</td>
             <td id="ta-sum-km" class="border border-black p-1.5 text-center">0</td>
             <td class="border border-black p-1.5 text-center">-</td>
-            <td id="ta-sum-fare" class="border border-black p-1.5 text-right">0=00</td>
             <td id="ta-sum-pct" class="border border-black p-1.5 text-center bg-amber-100/70">0%</td>
-            <td id="ta-sum-da" class="border border-black p-1.5 text-right bg-amber-100/70">0=00</td>
+            <td id="ta-sum-da" class="border border-black p-1.5 text-right bg-amber-100/70">0.00</td>
             <td class="border border-black p-1.5 text-center">-</td>
-            <td id="ta-sum-grand" class="border border-black p-1.5 text-right bg-slate-300 text-sm">0=00</td>
+            <td id="ta-sum-grand" class="border border-black p-1.5 text-right bg-slate-300 text-sm">0.00</td>
           </tr>
         </tfoot>
       </table>
@@ -199,10 +220,10 @@ body { font-family: 'Noto Sans Gujarati', 'Inter', sans-serif; color: #000; }
   <!-- PAGE 3: CERTIFICATE PAGE (COLUMNS 11 TO 17 - IMG_1683) -->
   <section id="tab-cert" class="tab-content page-break print-container bg-white rounded-xl shadow-md border border-slate-300 p-4 sm:p-8 hidden space-y-2">
     <div class="space-y-1.5 text-xs font-semibold">
-      <div class="flex items-center"><span class="font-bold text-sm">Government Servant For the Month of</span><span id="cert-month-disp" class="border-b border-black flex-1 ml-2 px-2 font-bold"></span></div>
-      <div class="flex items-center"><span class="w-16">Pay</span><span id="cert-pay-disp" class="border-b border-black w-48 text-center font-bold"></span><span class="ml-1 font-bold">₹</span></div>
+      <div class="flex items-center"><span class="font-bold text-sm">Government Servant For the Month of</span><span id="cert-month-disp" class="pdf-no-line flex-1 ml-2 px-2 font-bold"></span></div>
+      <div class="flex items-center"><span class="w-16">Pay</span><span id="cert-pay-disp" class="pdf-no-line w-48 text-center font-bold"></span><span class="ml-1 font-bold">₹</span></div>
       <div class="flex items-center"><span class="w-16">P. T. A.</span><span class="border-b border-black w-48"></span></div>
-      <div class="flex items-center"><span class="w-16">C. A.</span><span class="border-b border-black w-48"></span><span class="ml-4 font-bold">Head Quarter :</span><span class="border-b border-black w-40 text-center font-bold ml-1">ગાંધીનગર</span></div>
+      <div class="flex items-center"><span class="w-16">C. A.</span><span class="border-b border-black w-48"></span><span class="ml-4 font-bold">Head Quarter :</span><span class="pdf-no-line w-40 text-center font-bold ml-1">ગાંધીનગર</span></div>
     </div>
 
     <div class="border-2 border-black mt-2">
@@ -227,7 +248,7 @@ body { font-family: 'Noto Sans Gujarati', 'Inter', sans-serif; color: #000; }
             <td class="border border-black p-0.5">11</td><td class="border border-black p-0.5">12</td><td class="border border-black p-0.5">13</td><td class="border border-black p-0.5">14</td><td class="border border-black p-0.5">15</td><td colspan="2" class="border border-black p-0.5">16</td><td class="border border-black p-0.5">17</td>
           </tr>
           <tr class="font-bold border-t border-black text-[10px]">
-            <td class="border border-black"></td><td class="border border-black"></td><td class="border border-black underline text-xs">પ્રમાણપત્ર</td><td class="border border-black"></td><td class="border border-black"></td><td class="border border-black w-[10%]">₹</td><td class="border border-black w-[5%]">Ps.</td><td class="border border-black"></td>
+            <td class="border border-black"></td><td class="border border-black"></td><td class="border border-black text-xs">પ્રમાણપત્ર</td><td class="border border-black"></td><td class="border border-black"></td><td class="border border-black w-[10%]">₹</td><td class="border border-black w-[5%]">Ps.</td><td class="border border-black"></td>
           </tr>
         </thead>
       </table>
@@ -334,11 +355,11 @@ body { font-family: 'Noto Sans Gujarati', 'Inter', sans-serif; color: #000; }
       <h2 class="text-lg font-extrabold">FORM G. T. R. No. 35</h2>
       <p class="text-xs font-semibold">(See Rule 169 and 186)</p>
       <div class="flex justify-end text-xs font-bold"><span>Bill Register No.</span><input type="text" id="bill-reg-no" class="underline-input border-b border-black w-32 ml-1 text-center"></div>
-      <div class="text-left text-xs font-semibold">Travelling Allowance Bill of the Establishment/Gazetted Government Servants. Office of the <input type="text" value="Principal Civil Judge Court, Gandhinagar" class="underline-input border-b border-black font-bold w-72 px-1"></div>
+      <div class="text-left text-xs font-semibold">Travelling Allowance Bill of the Establishment/Gazetted Government Servants. Office of the <input type="text" value="Principal Civil Judge Court, Gandhinagar" class="pdf-no-line font-bold w-72 px-1"></div>
     </div>
     <div class="border-t-2 border-b-2 border-black py-2 space-y-1.5 text-xs">
       <div class="text-center font-bold underline">(For Use in Treasury)</div>
-      <div><span class="font-semibold">Name of the Treasury :</span> <input type="text" id="treasury-name" value="District Treasury Office, Gandhinagar" class="underline-input border-b border-black w-72 px-1 font-bold"></div>
+      <div><span class="font-semibold">Name of the Treasury :</span> <input type="text" id="treasury-name" value="District Treasury Office, Gandhinagar" class="pdf-no-line w-72 px-1 font-bold"></div>
       <div class="grid grid-cols-3 gap-2 pt-1"><div>Bill Transit Reg. Sr. No. _______ Date _______</div><div class="text-center">Token No. _______</div><div class="text-right">Date _______</div></div>
     </div>
     <div class="space-y-2 text-xs">
@@ -386,9 +407,9 @@ body { font-family: 'Noto Sans Gujarati', 'Inter', sans-serif; color: #000; }
     <h2 class="text-lg font-bold border-b pb-2">સેવ કરેલા તમામ બિલ</h2>
     <div class="flex flex-wrap gap-2 items-center">
       <input id="saved-search" type="search" oninput="loadSavedBillsList()" placeholder="નામ / મહિનો / તારીખથી શોધો..." class="border rounded-lg px-3 py-2 text-sm flex-1 min-w-[220px]">
-      <button onclick="syncFromGoogleSheet()" class="bg-sky-700 text-white rounded-lg px-3 py-2 text-sm font-bold">☁️ રેકોર્ડ રિફ્રેશ કરો</button>
+      <button onclick="syncFromGoogleSheet()" class="bg-sky-700 text-white rounded-lg px-3 py-2 text-sm font-bold">☁️ Google Sheetમાંથી રેકોર્ડ મેળવો</button>
     </div>
-    <p id="sync-status" class="text-xs text-slate-500">Officeના બધા અધિકૃત ઉપયોગકર્તાઓના બિલ અહીં દેખાશે.</p>
+    <p id="sync-status" class="text-xs text-slate-500">આ ઉપકરણમાં સેવ થયેલા બિલ અહીં દેખાશે. બીજા ઉપકરણના રેકોર્ડ માટે Google Sheet Sync કરો.</p>
     <div id="saved-bills-container" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
   </section>
 
@@ -397,14 +418,20 @@ body { font-family: 'Noto Sans Gujarati', 'Inter', sans-serif; color: #000; }
 <script>
 let dayCounter = 0, currentBillId = null;
 // Deploy the companion Google Apps Script and paste its /exec URL here.
-// આ HTML Apps Script Web Appમાં index.html તરીકે ચાલે છે; URLની જરૂર નથી.
+const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwzfJA7wR-i1_aT2EVsqN6iEUD_bqECC-X0tWKfUxAQwcPQWSw0bmPOOAzsdEFj5Tgj9w/exec";
 
 document.addEventListener("DOMContentLoaded", () => {
-  lucide.createIcons();
-  loadDefaultPhotoData();
-  calcProcessPct();
-  loadSavedBillsList();
-  syncFromGoogleSheet();
+  try {
+    if (window.lucide && typeof window.lucide.createIcons === "function") window.lucide.createIcons();
+    loadDefaultPhotoData();
+    calcProcessPct();
+    loadSavedBillsList();
+    recalculateAll();
+  } catch (error) {
+    console.error("પેજ શરૂ કરવામાં સમસ્યા:", error);
+    const status = document.getElementById("sync-status");
+    if (status) status.textContent = "ફોર્મ શરૂ કરવામાં સમસ્યા આવી: " + error.message;
+  }
 });
 
 function switchTab(tabId) {
@@ -431,7 +458,10 @@ function printLandscapeCombined() {
 }
 
 function printPortraitPage() {
+  const active = document.querySelector('.tab-content:not(.hidden)');
+  if (active && active.id === 'tab-ta') { printLandscapeCombined(); return; }
   document.getElementById('page-orientation-style').innerHTML = `@page { size: A4 portrait; margin: 8mm; }`;
+  document.body.classList.remove('print-all-mode');
   window.print();
 }
 
@@ -453,7 +483,7 @@ function addNewDayGroup(dateStr = "", pct = "30", customDa = null, journeys = []
   const dayId = `day-${dayCounter}`;
   const tbody = document.getElementById('bailiff-tbody');
   const fullDa = parseFloat(document.getElementById('full-da-rate').value) || 300;
-  const calcDa = customDa !== null ? parseFloat(customDa) : Math.round((fullDa * parseInt(pct)) / 100);
+  const calcDa = customDa !== null && customDa !== '' ? (parseFloat(customDa) || 0) : Math.round((fullDa * (parseInt(pct, 10) || 0)) / 100);
 
   const allowanceTr = document.createElement('tr');
   allowanceTr.id = `${dayId}-allowance`;
@@ -536,9 +566,10 @@ function removeJourneyRow(btn, dayId) {
   if (rows.length <= 1) { removeEntireDay(dayId); return; }
   const row = btn.closest('tr');
   const dateInput = row.querySelector('.day-date');
-  const savedDate = dateInput ? dateInput.value : "";
+  const savedDate = dateInput ? dateInput.value : (document.querySelector(`.${dayId}-row .day-date`)?.value || '');
+  const wasFirst = !!dateInput;
   row.remove();
-  if (dateInput) {
+  if (wasFirst) {
     const newFirst = document.querySelector(`.${dayId}-row`);
     if (newFirst) newFirst.cells[0].innerHTML = `<input type="date" value="${savedDate}" onchange="recalculateAll()" class="day-date w-full text-center font-bold bg-transparent">`;
   }
@@ -618,11 +649,7 @@ function syncAllForms() {
     const dayId = allowRow.dataset.dayid;
     const dateEl = document.querySelector(`.${dayId}-row .day-date`);
     const rawDate = dateEl ? dateEl.value : "";
-    let dispDate = rawDate;
-    if (rawDate && rawDate.includes('-')) {
-      const p = rawDate.split('-');
-      dispDate = `${p[2]}/${p[1]}/${p[0].slice(-2)}`;
-    }
+    const dispDate = formatDateDDMMYYYY(rawDate);
     document.querySelectorAll(`.${dayId}-row`).forEach((r, idx) => {
       const from = r.querySelector('.from-input').value;
       const outT = r.querySelector('.out-input').value;
@@ -634,17 +661,21 @@ function syncAllForms() {
       if (from || to || km > 0) {
         taTbody.innerHTML += `
           <tr class="border-b border-slate-400">
-            <td class="border border-black p-1">${from}</td>
+            <td class="border border-black p-1 village-cell">${escapeHtml(from)}</td>
             <td class="border border-black p-1 text-center">${idx===0?dispDate:',,'}</td>
-            <td class="border border-black p-1 text-center">${outT}</td>
-            <td class="border border-black p-1">${to}</td>
+            <td class="border border-black p-1 text-center">${escapeHtml(outT)}</td>
+            <td class="border border-black p-1 village-cell">${escapeHtml(to)}</td>
             <td class="border border-black p-1 text-center">${idx===0?dispDate:',,'}</td>
-            <td class="border border-black p-1 text-center">${inT}</td>
-            <td class="border border-black p-1 text-center">${idx===0?veh:',,'}</td>
-            <td class="border border-black p-1 text-center font-bold">${km}</td>
+            <td class="border border-black p-1 text-center">${escapeHtml(inT)}</td>
+            <td class="border border-black p-1 text-center">${idx===0?escapeHtml(veh):',,'}</td>
+            <td class="border border-black p-1 text-center font-bold">${km || ''}</td>
             <td class="border border-black p-1 text-center">${idx===0?rate.toFixed(2):',,'}</td>
             <td class="border border-black p-1 text-right font-bold">${fare.toFixed(2)}</td>
-            <td class="border border-black p-1"></td><td class="border border-black p-1"></td><td class="border border-black p-1"></td>
+            <td class="border border-black p-1 text-center font-bold">${km || ''}</td>
+            <td class="border border-black p-1 text-center">-</td>
+            <td class="border border-black p-1 text-center">-</td>
+            <td class="border border-black p-1 text-right">-</td>
+            <td class="border border-black p-1 text-center">પ્રોસેસ બજવણી</td>
             <td class="border border-black p-1 text-right font-bold">${fare.toFixed(2)}</td>
           </tr>`;
       }
@@ -654,7 +685,7 @@ function syncAllForms() {
     totalPctSum += pct;
     taTbody.innerHTML += `
       <tr class="border-b-2 border-black font-bold bg-amber-50/60">
-        <td class="border border-black p-1" colspan="10"></td>
+        <td class="border border-black p-1" colspan="12">દૈનિક ભથ્થું (D.A.)</td>
         <td class="border border-black p-1 text-center">${pct}%</td>
         <td class="border border-black p-1 text-right">${da.toFixed(2)}</td>
         <td class="border border-black p-1 text-center">પ્રોસેસ બજવણી</td>
@@ -679,6 +710,7 @@ function collectBillObject() {
     document.querySelectorAll(`.${dayId}-row`).forEach(r => {
       const km = parseFloat(r.querySelector('.km-input').value) || 0;
       journeys.push({
+        date: r.querySelector('.day-date')?.value || (document.querySelector(`.${r.classList[1]} .day-date`)?.value || ''),
         from: r.querySelector('.from-input').value, out: r.querySelector('.out-input').value,
         to: r.querySelector('.to-input').value, in: r.querySelector('.in-input').value,
         veh: r.querySelector('.veh-input').value, km: km, fare: (km * rate).toFixed(2)
@@ -711,52 +743,164 @@ function setSyncStatus(message, isError=false) {
   const el = document.getElementById('sync-status');
   if (el) { el.textContent = message; el.className = 'text-xs ' + (isError ? 'text-rose-700' : 'text-slate-500'); }
 }
-
-function saveBillData() {
-  const bill = collectBillObject();
-  if (!bill.bailiffName || bill.bailiffName === "અનામી બેલીફ") {
-    alert("કૃપા કરીને બેલીફનું નામ દાખલ કરો.");
-    return;
-  }
-  currentBillId = bill.id;
-  setSyncStatus("બિલ Google Sheetsમાં સેવ થઈ રહ્યું છે અને PDF તૈયાર થઈ રહ્યો છે...");
-  google.script.run
-    .withSuccessHandler(result => {
-      if (!result || result.ok !== true) {
-        setSyncStatus("બિલ સેવ કરવામાં સમસ્યા આવી: " + (result?.message || "અજ્ઞાત ભૂલ"), true);
-        alert("બિલ સેવ થઈ શક્યું નથી. ફરી પ્રયાસ કરો.");
-        return;
-      }
-      bill.pdfUrl = result.pdfUrl || "";
-      bill.updatedAt = result.updatedAt || bill.updatedAt;
-      putLocalBill(bill);
-      loadSavedBillsList();
-      setSyncStatus("✅ બિલ Google Sheetsમાં સેવ થયું અને Drive PDF તૈયાર છે. Bill ID: " + bill.id);
-      alert("બિલ સફળતાપૂર્વક સેવ થયું.\nBill ID: " + bill.id + (bill.pdfUrl ? "\nPDF પણ Google Driveમાં તૈયાર છે." : ""));
-    })
-    .withFailureHandler(error => {
-      setSyncStatus("સેવ નિષ્ફળ: " + (error?.message || error), true);
-      alert("બિલ સેવ થઈ શક્યું નથી. Office Google account અને deployment permission તપાસો.");
-    })
-    .saveBill(bill);
+function formatDateDDMMYYYY(value) {
+  if (!value) return '';
+  const m = String(value).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  return m ? `${m[3]}-${m[2]}-${m[1]}` : String(value);
+}
+function escapeHtml(value) {
+  return String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
 }
 
-function syncFromGoogleSheet() {
-  setSyncStatus("Google Sheetsમાંથી બિલ મેળવાઈ રહ્યા છે...");
-  google.script.run
-    .withSuccessHandler(result => {
-      if (!result || result.ok !== true || !Array.isArray(result.bills)) {
-        setSyncStatus("Google Sheets તરફથી યોગ્ય જવાબ મળ્યો નથી.", true);
-        return;
+async function createFivePagePdfBase64() {
+  if (!window.html2canvas || !window.jspdf || !window.jspdf.jsPDF) {
+    throw new Error('PDF લાઇબ્રેરી લોડ થઈ નથી. ઇન્ટરનેટ કનેક્શન તપાસો અને ફરી પ્રયાસ કરો.');
+  }
+  if (document.fonts && document.fonts.ready) await document.fonts.ready;
+  const { jsPDF } = window.jspdf;
+  let pdf = null;
+  const ids = ['tab-bailiff', 'tab-ta', 'tab-cert', 'tab-closing', 'tab-gtr'];
+
+  for (let i = 0; i < ids.length; i++) {
+    const original = document.getElementById(ids[i]);
+    const clone = original.cloneNode(true);
+    clone.querySelectorAll('.no-print').forEach(el => el.remove());
+    clone.classList.remove('hidden');
+    clone.classList.remove('shadow-md');
+    clone.style.display = 'block';
+    clone.style.position = 'static';
+    clone.style.width = ids[i] === 'tab-ta' ? '1500px' : '1050px';
+    clone.style.maxWidth = 'none';
+    clone.style.margin = '0';
+    clone.style.border = '0';
+    clone.style.borderRadius = '0';
+    clone.style.boxShadow = 'none';
+    clone.style.background = '#ffffff';
+    clone.style.padding = ids[i] === 'tab-ta' ? '18px' : '28px';
+    clone.querySelectorAll('input,select,textarea').forEach(el => {
+      const span = document.createElement('span');
+      const rawValue = el.tagName === 'SELECT' ? (el.options[el.selectedIndex]?.text || '') : (el.value || '');
+      span.textContent = el.type === 'date' ? formatDateDDMMYYYY(rawValue) : rawValue;
+      span.style.display = 'inline-block';
+      span.style.minWidth = getComputedStyle(el).width;
+      const isTableData = !!el.closest('td') && !el.classList.contains('underline-input');
+      const isCharBox = el.classList.contains('char-box');
+      const noPdfLine = el.classList.contains('pdf-no-line');
+      if (isCharBox) {
+        span.style.border = getComputedStyle(el).border || '1px solid #000';
+        span.style.width = getComputedStyle(el).width;
+        span.style.height = getComputedStyle(el).height;
+        span.style.textAlign = 'center';
+        span.style.boxSizing = 'border-box';
+      } else {
+        span.style.borderBottom = (isTableData || noPdfLine) ? '0' : (getComputedStyle(el).borderBottom || '1px solid #000');
       }
-      localStorage.setItem("bailiff_saved_bills", JSON.stringify(result.bills));
-      loadSavedBillsList();
-      setSyncStatus("☁️ Google Sheetsમાંથી " + result.bills.length + " બિલ ઉપલબ્ધ છે.");
-    })
-    .withFailureHandler(error => {
-      setSyncStatus("રેકોર્ડ મેળવવામાં નિષ્ફળ: " + (error?.message || error), true);
-    })
-    .getBills();
+      span.style.textDecoration = (isTableData || noPdfLine) ? 'none' : getComputedStyle(el).textDecoration;
+      if (el.classList.contains('from-input') || el.classList.contains('to-input')) span.style.fontSize = '12.5px';
+      span.style.padding = '1px 3px';
+      el.replaceWith(span);
+    });
+    const host = document.createElement('div');
+    host.className = 'pdf-render-root';
+    host.style.position = 'fixed';
+    host.style.left = '-20000px';
+    host.style.top = '0';
+    host.style.width = clone.style.width;
+    host.appendChild(clone);
+    document.body.appendChild(host);
+
+    try {
+      const canvas = await html2canvas(clone, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#ffffff',
+        logging: false,
+        windowWidth: ids[i] === 'tab-ta' ? 1600 : 1100
+      });
+      const landscape = ids[i] === 'tab-ta';
+      if (!pdf) {
+        pdf = new jsPDF({ orientation: landscape ? 'landscape' : 'portrait', unit: 'mm', format: 'a4', compress: true });
+      } else {
+        pdf.addPage('a4', landscape ? 'landscape' : 'portrait');
+      }
+      const pageW = landscape ? 297 : 210;
+      const pageH = landscape ? 210 : 297;
+      const margin = 5;
+      const usableW = pageW - margin * 2;
+      const usableH = pageH - margin * 2;
+      const ratio = Math.min(usableW / canvas.width, usableH / canvas.height);
+      const imgW = canvas.width * ratio;
+      const imgH = canvas.height * ratio;
+      const x = (pageW - imgW) / 2;
+      const y = margin;
+      pdf.addImage(canvas.toDataURL('image/jpeg', 0.95), 'JPEG', x, y, imgW, imgH, undefined, 'FAST');
+    } finally {
+      host.remove();
+    }
+  }
+  return pdf.output('datauristring').split(',')[1];
+}
+
+function runGoogleScript(method, ...args) {
+  return new Promise((resolve, reject) => {
+    if (!window.google || !google.script || !google.script.run) {
+      reject(new Error('આ પેજ Google Apps Script Web App માં ખોલેલું નથી. Deploy કરેલી /exec લિંકથી ખોલો.'));
+      return;
+    }
+    const runner = google.script.run
+      .withSuccessHandler(resolve)
+      .withFailureHandler(err => reject(new Error(err && err.message ? err.message : String(err))));
+    runner[method](...args);
+  });
+}
+
+async function saveBillData() {
+  const bill = collectBillObject();
+  if (!bill.bailiffName || bill.bailiffName === 'અનામી બેલીફ') {
+    alert('કૃપા કરીને બેલીફનું નામ દાખલ કરો.');
+    return;
+  }
+  const button = document.querySelector('button[onclick="saveBillData()"]');
+  if (button) { button.disabled = true; button.textContent = 'PDF બનાવી રહ્યા છે...'; }
+  setSyncStatus('પાંચેય પેજનું PDF તૈયાર થઈ રહ્યું છે...');
+  try {
+    bill.pdfBase64 = await createFivePagePdfBase64();
+    const result = await runGoogleScript('saveBill', bill);
+    if (!result || result.ok !== true) throw new Error(result?.message || 'બિલ સેવ થયું નથી.');
+    bill.pdfUrl = result.pdfUrl || '';
+    bill.updatedAt = result.updatedAt || new Date().toLocaleString('gu-IN');
+    delete bill.pdfBase64;
+    currentBillId = bill.id;
+    putLocalBill(bill);
+    loadSavedBillsList();
+    setSyncStatus('બિલ Google Sheet માં સેવ થયું અને પાંચ પેજનું PDF Google Drive માં સાચવાયું.');
+    alert('બિલ સફળતાપૂર્વક Google Sheet માં સેવ થયું છે અને PDF Google Drive માં સાચવાઈ છે.');
+  } catch (e) {
+    console.error(e);
+    setSyncStatus('સેવ કરવામાં ભૂલ: ' + e.message, true);
+    alert('બિલ સેવ થઈ શક્યું નથી: ' + e.message);
+  } finally {
+    if (button) { button.disabled = false; button.textContent = '💾 બિલ સેવ (Google Sheet)'; }
+  }
+}
+
+async function syncFromGoogleSheet() {
+  setSyncStatus('Google Sheet માંથી બિલ મેળવાઈ રહ્યા છે...');
+  try {
+    const payload = await runGoogleScript('getBills');
+    if (!payload || payload.ok !== true || !Array.isArray(payload.bills)) {
+      throw new Error(payload?.message || 'Google Sheet તરફથી યોગ્ય જવાબ મળ્યો નથી.');
+    }
+    const local = getLocalBills();
+    const byId = new Map(local.map(b => [b.id, b]));
+    payload.bills.forEach(b => byId.set(b.id, b));
+    const merged = Array.from(byId.values()).sort((a,b) => String(b.updatedAt||'').localeCompare(String(a.updatedAt||'')));
+    localStorage.setItem('bailiff_saved_bills', JSON.stringify(merged));
+    loadSavedBillsList();
+    setSyncStatus(`Google Sheet માંથી ${payload.bills.length} બિલ મેળવ્યા. કુલ ${merged.length} બિલ ઉપલબ્ધ છે.`);
+  } catch (e) {
+    setSyncStatus('Google Sheet Sync નિષ્ફળ: ' + e.message, true);
+  }
 }
 function loadSavedBillsList() {
   const list = getLocalBills();
@@ -783,49 +927,66 @@ function loadSavedBillsList() {
     const open = document.createElement('button'); open.className = 'flex-1 bg-sky-600 text-white py-1 rounded text-xs font-bold';
     open.textContent = 'ખોલો'; open.onclick = () => openSavedBill(b.id);
     if (b.pdfUrl) {
-      const pdf = document.createElement('button');
-      pdf.className = 'bg-emerald-100 text-emerald-800 px-3 py-1 rounded text-xs font-bold';
-      pdf.textContent = 'PDF જુઓ';
-      pdf.onclick = () => window.open(b.pdfUrl, '_blank');
-      actions.append(pdf);
+      const pdf = document.createElement('a');
+      pdf.className = 'bg-emerald-700 text-white px-3 py-1 rounded text-xs font-bold text-center';
+      pdf.textContent = 'PDF';
+      pdf.href = b.pdfUrl;
+      pdf.target = '_blank';
+      pdf.rel = 'noopener';
+      actions.appendChild(pdf);
     }
     const del = document.createElement('button'); del.className = 'bg-rose-100 text-rose-700 px-3 py-1 rounded text-xs font-bold';
     del.textContent = 'ડિલીટ'; del.onclick = () => deleteSavedBill(b.id);
-    actions.prepend(open); actions.append(del);
-    card.append(heading, sub, amount, actions); container.appendChild(card);
+    actions.prepend(open);
+    actions.append(del); card.append(heading, sub, amount, actions); container.appendChild(card);
   });
 }
 function openSavedBill(id) {
   const bill = getLocalBills().find(b => b.id === id);
   if (!bill) return;
   currentBillId = bill.id;
-  document.getElementById('court-title').value = bill.courtTitle || "";
-  document.getElementById('bailiff-name').value = bill.bailiffName || "";
-  document.getElementById('from-month').value = bill.fromMonth || "";
-  document.getElementById('to-month').value = bill.toMonth || "";
-  document.getElementById('basic-pay').value = bill.basicPay || "";
+  document.getElementById('court-title').value = bill.courtTitle || '';
+  document.getElementById('bailiff-name').value = bill.bailiffName || '';
+  document.getElementById('from-month').value = bill.fromMonth || '';
+  document.getElementById('to-month').value = bill.toMonth || '';
+  document.getElementById('basic-pay').value = bill.basicPay || '';
   document.getElementById('proc-total').value = bill.procTotal || 195;
   document.getElementById('proc-served').value = bill.procServed || 181;
-  document.getElementById('bailiff-tbody').innerHTML = "";
+  document.getElementById('bailiff-tbody').innerHTML = '';
   dayCounter = 0;
-  (bill.days || []).forEach(d => addNewDayGroup(d.date, d.pct, d.da, d.journeys));
-  recalculateAll(); switchTab('bailiff');
+
+  if (Array.isArray(bill.days) && bill.days.length) {
+    bill.days.forEach(d => addNewDayGroup(d.date || '', d.pct ?? '30', d.da ?? null, d.journeys || []));
+  } else if (Array.isArray(bill.journeys) && bill.journeys.length) {
+    const grouped = new Map();
+    bill.journeys.forEach(j => {
+      const key = j.date || 'legacy-' + grouped.size;
+      if (!grouped.has(key)) grouped.set(key, { date: j.date || '', pct: j.pct ?? '100', da: 0, journeys: [] });
+      const day = grouped.get(key);
+      day.da += Number(j.da ?? ((Number(document.getElementById('full-da-rate').value) || 300) * Number(j.pct ?? 100) / 100));
+      day.journeys.push(j);
+    });
+    grouped.forEach(d => addNewDayGroup(d.date, String(d.pct), d.da, d.journeys));
+  } else {
+    addNewDayGroup();
+  }
+  calcProcessPct();
+  recalculateAll();
+  switchTab('bailiff');
 }
-function deleteSavedBill(id) {
-  if (!confirm('આ બિલ Google Sheets અને તેની Drive PDF archiveમાંથી કાયમી કાઢી નાખવું છે?')) return;
-  setSyncStatus("બિલ ડિલીટ થઈ રહ્યું છે...");
-  google.script.run
-    .withSuccessHandler(result => {
-      if (!result || result.ok !== true) {
-        setSyncStatus("ડિલીટ નિષ્ફળ: " + (result?.message || ""), true);
-        return;
-      }
-      localStorage.setItem("bailiff_saved_bills", JSON.stringify(getLocalBills().filter(b => b.id !== id)));
-      loadSavedBillsList();
-      setSyncStatus("બિલ અને તેની PDF archive કાઢી નાખવામાં આવી.");
-    })
-    .withFailureHandler(error => setSyncStatus("ડિલીટ નિષ્ફળ: " + (error?.message || error), true))
-    .deleteBill(id);
+
+async function deleteSavedBill(id) {
+  if (!confirm('આ બિલ Google Sheet અને Google Drive માંથી પણ કાઢી નાખવું છે?')) return;
+  try {
+    const result = await runGoogleScript('deleteBill', id);
+    if (result && result.ok === false) throw new Error(result.message || 'બિલ મળ્યું નથી.');
+    localStorage.setItem('bailiff_saved_bills', JSON.stringify(getLocalBills().filter(b => b.id !== id)));
+    loadSavedBillsList();
+    setSyncStatus('બિલ Google Sheet અને Google Drive માંથી કાઢી નાખ્યું.');
+  } catch (e) {
+    setSyncStatus('બિલ કાઢી શકાયું નથી: ' + e.message, true);
+    alert('બિલ કાઢી શકાયું નથી: ' + e.message);
+  }
 }
 function resetNewBill() {
   currentBillId = null;
