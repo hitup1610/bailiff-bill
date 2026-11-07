@@ -29,24 +29,25 @@ body { font-family: 'Noto Sans Gujarati', 'Inter', sans-serif; color: #000; }
 .edp-cell { width: 20px; text-align: center; border-left: 1px solid #000; border-right: 1px solid #000; font-weight: 600; }
 .col-11-17-grid { background-image: linear-gradient(to right, transparent 13.5%, #000 13.5%, #000 13.7%, transparent 13.7%, transparent 27%, #000 27%, #000 27.2%, transparent 27.2%, transparent 41%, #000 41%, #000 41.2%, transparent 41.2%, transparent 55%, #000 55%, #000 55.2%, transparent 55.2%, transparent 69%, #000 69%, #000 69.2%, transparent 69.2%, transparent 79%, #000 79%, #000 79.2%, transparent 79.2%, transparent 84%, #000 84%, #000 84.2%, transparent 84.2%); }
 @media print {
+  body { background: white !important; color: black !important; font-size: 11.5px !important; }
   .no-print { display: none !important; }
-  body { background: white !important; padding: 0 !important; margin: 0 !important; font-size: 9.5pt; }
-  .print-all-mode .tab-content { display: block !important; }
-  body:not(.print-all-mode) .tab-content { display: none !important; }
-  body:not(.print-all-mode) .tab-content:not(.hidden) { display: block !important; }
-  .page-break { page-break-before: always; }
-  #tab-ta { page-break-before: always; }
-  .pdf-render-root { position: fixed; left: -20000px; top: 0; z-index: -1; background: #fff; }
-  .print-container { width: 100% !important; max-width: 100% !important; box-shadow: none !important; border: none !important; margin: 0 !important; padding: 4px !important; }
-  input, select { border: none !important; background: transparent !important; appearance: none !important; -webkit-appearance: none !important; }
-  .char-box { border: 1.5px solid #000 !important; }
-  .underline-input { border-bottom: 1px solid #000 !important; }
+  .print-container { box-shadow: none !important; border: 0 !important; padding: 0 !important; margin: 0 !important; width: 100% !important; max-width: 100% !important; }
+  .page-break { page-break-after: always; break-after: page; }
+  body:not(.print-all-mode) .tab-content.hidden { display: none !important; }
+  body.print-all-mode .tab-content { display: block !important; }
+  body.print-all-mode #tab-saved { display: none !important; }
+  input, select, textarea { border: none !important; box-shadow: none !important; background: transparent !important; appearance: none !important; -webkit-appearance: none !important; }
+  .underline-input { border-bottom: 1px solid black !important; border-radius: 0 !important; }
 }
+.pdf-render-root { position: fixed; left: -20000px; top: 0; z-index: -1; background: #fff; }
 </style>
-<style id="page-orientation-style"></style>
+<style id="page-orientation-style">
+@page { size: A4 portrait; margin: 8mm; }
+</style>
 </head>
-<body class="h-full flex flex-col bg-slate-100">
+<body class="min-h-full flex flex-col bg-slate-100 text-slate-900 text-xs sm:text-sm">
 
+<!-- MAIN HEADER -->
 <header class="no-print bg-slate-900 text-white sticky top-0 z-50 shadow-md">
   <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-2">
     <div>
@@ -60,14 +61,15 @@ body { font-family: 'Noto Sans Gujarati', 'Inter', sans-serif; color: #000; }
       <button onclick="printPortraitPage()" class="bg-sky-600 hover:bg-sky-700 px-3 py-1.5 rounded-lg text-xs font-bold">ચાલુ પેજ પ્રિન્ટ</button>
     </div>
   </div>
-  <div class="bg-slate-800 px-4 border-t border-slate-700">
-    <div class="max-w-7xl mx-auto flex space-x-1.5 overflow-x-auto py-2">
-      <button onclick="switchTab('bailiff')" id="tab-btn-bailiff" class="tab-btn px-3 py-1.5 text-xs font-bold rounded-lg bg-sky-600 text-white whitespace-nowrap">૧. બેલીફ પ્રોસેસ રીપોર્ટ</button>
-      <button onclick="switchTab('ta')" id="tab-btn-ta" class="tab-btn px-3 py-1.5 text-xs font-bold rounded-lg text-slate-300 hover:bg-slate-700 whitespace-nowrap">૨. કમ્બાઈન T.A. પત્રક (Col 1-16)</button>
-      <button onclick="switchTab('cert')" id="tab-btn-cert" class="tab-btn px-3 py-1.5 text-xs font-bold rounded-lg text-slate-300 hover:bg-slate-700 whitespace-nowrap">૩. પ્રમાણપત્ર પેજ (Col 11-17)</button>
-      <button onclick="switchTab('closing')" id="tab-btn-closing" class="tab-btn px-3 py-1.5 text-xs font-bold rounded-lg text-slate-300 hover:bg-slate-700 whitespace-nowrap">૪. આખરી મંજૂરી & Stamp પેજ</button>
-      <button onclick="switchTab('gtr')" id="tab-btn-gtr" class="tab-btn px-3 py-1.5 text-xs font-bold rounded-lg text-slate-300 hover:bg-slate-700 whitespace-nowrap">૫. FORM G.T.R. No. 35</button>
-      <button onclick="switchTab('saved')" id="tab-btn-saved" class="tab-btn px-3 py-1.5 text-xs font-bold rounded-lg text-amber-300 hover:bg-slate-700 whitespace-nowrap">સેવ કરેલા બિલ (<span id="saved-count">0</span>)</button>
+  <!-- RESPONSIVE TOUCH TABS (GRID ON MOBILE, FLEX ON PC) -->
+  <div class="bg-slate-800 px-2 sm:px-4 border-t border-slate-700 py-2">
+    <div class="max-w-7xl mx-auto grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-1.5 text-center">
+      <button type="button" onclick="switchTab('bailiff')" id="tab-btn-bailiff" class="tab-btn px-2.5 py-2 text-xs font-bold rounded-lg bg-sky-600 text-white shadow-sm flex items-center justify-center cursor-pointer transition select-none">૧. બેલીફ રીપોર્ટ</button>
+      <button type="button" onclick="switchTab('ta')" id="tab-btn-ta" class="tab-btn px-2.5 py-2 text-xs font-bold rounded-lg bg-slate-700 text-slate-200 hover:bg-slate-600 flex items-center justify-center cursor-pointer transition select-none">૨. કમ્બાઈન T.A. (1-16)</button>
+      <button type="button" onclick="switchTab('cert')" id="tab-btn-cert" class="tab-btn px-2.5 py-2 text-xs font-bold rounded-lg bg-slate-700 text-slate-200 hover:bg-slate-600 flex items-center justify-center cursor-pointer transition select-none">૩. પ્રમાણપત્ર પેજ</button>
+      <button type="button" onclick="switchTab('closing')" id="tab-btn-closing" class="tab-btn px-2.5 py-2 text-xs font-bold rounded-lg bg-slate-700 text-slate-200 hover:bg-slate-600 flex items-center justify-center cursor-pointer transition select-none">૪. મંજૂરી & Stamp</button>
+      <button type="button" onclick="switchTab('gtr')" id="tab-btn-gtr" class="tab-btn px-2.5 py-2 text-xs font-bold rounded-lg bg-slate-700 text-slate-200 hover:bg-slate-600 flex items-center justify-center cursor-pointer transition select-none">૫. FORM G.T.R. 35</button>
+      <button type="button" onclick="switchTab('saved')" id="tab-btn-saved" class="tab-btn px-2.5 py-2 text-xs font-bold rounded-lg bg-amber-950/60 text-amber-300 border border-amber-500/50 hover:bg-amber-900/70 flex items-center justify-center gap-1 cursor-pointer transition select-none">📁 સેવ કરેલા બિલ (<span id="saved-count">0</span>)</button>
     </div>
   </div>
 </header>
@@ -92,66 +94,73 @@ body { font-family: 'Noto Sans Gujarati', 'Inter', sans-serif; color: #000; }
   </div>
 
   <!-- PAGE 1: BAILIFF PROCESS REPORT -->
-  <section id="tab-bailiff" class="tab-content print-container bg-white rounded-xl shadow-md border border-slate-300 p-4 sm:p-6 space-y-4">
-    <div class="text-center space-y-2 border-b-2 border-black pb-3">
-      <div class="flex items-center justify-center gap-2">
-        <span class="font-bold text-lg">મે.</span>
-        <input type="text" id="court-title" value="પ્રિન્સિપાલ સિવિલ જજ સાહેબશ્રી, ગાંધીનગર, મુ. ગાંધીનગર" oninput="syncAllForms()" autocomplete="off" class="underline-input text-center font-bold text-lg w-full sm:w-4/5 border-b border-dashed border-black">
+  <section id="tab-bailiff" class="tab-content page-break print-container bg-white rounded-xl shadow-md border border-slate-300 p-2 sm:p-5 space-y-4">
+    <div class="text-center space-y-1">
+      <div class="flex justify-center items-center gap-1">
+        <span class="text-xl font-extrabold">મે.</span>
+        <input type="text" id="court-title" value="પ્રિન્સિપાલ સિવિલ જજ સાહેબશ્રી, ગાંધીનગર, મુ. ગાંધીનગર" autocomplete="off" class="text-base sm:text-lg font-extrabold text-center border-b border-dashed border-black pb-0.5 w-full max-w-xl">
       </div>
-      <div class="text-sm leading-relaxed pt-1">
-        આપ સાહેબશ્રીના કોર્ટના બેલીફ 
-        <input type="text" id="bailiff-name" value="" placeholder="બેલીફનું નામ દાખલ કરો" oninput="syncAllForms()" autocomplete="off" class="underline-input font-bold border-b border-black px-2 text-center min-w-[200px]">
-        નો નમ્રતાપુર્વક રીપોર્ટ કે, માહે 
-        <input type="text" id="from-month" value="" placeholder="માસ" oninput="syncAllForms()" autocomplete="off" class="underline-input font-bold border-b border-black w-28 text-center">
-        થી માહે 
-        <input type="text" id="to-month" value="" placeholder="માસ" oninput="syncAllForms()" autocomplete="off" class="underline-input font-bold border-b border-black w-28 text-center">
-        દરમિયાન અમો પ્રોસેસ બજાવવા સારુ ગયેલા. જેનો રીપોર્ટ નીચે મુજબ છે. મારે બેઝીક પગાર રૂ. 
-        <input type="number" id="basic-pay" value="" placeholder="પગાર" oninput="syncAllForms()" autocomplete="off" class="underline-input font-bold border-b border-black w-24 text-center">
+      <div class="pt-2 text-xs sm:text-sm font-semibold leading-relaxed">
+        આપ સાહેબશ્રીના કોર્ટના બેલીફ
+        <input type="text" id="bailiff-name" placeholder="બેલીફનું નામ દાખલ કરો" oninput="syncAllForms()" autocomplete="off" class="underline-input border-b border-black font-bold px-2 py-0.5 w-64 text-center">
+        નો નમ્રતાપુર્વક રીપોર્ટ કે, માહે
+        <input type="text" id="from-month" oninput="syncAllForms()" autocomplete="off" class="underline-input border-b border-black font-bold px-2 py-0.5 w-36 text-center">
+        થી માહે
+        <input type="text" id="to-month" oninput="syncAllForms()" autocomplete="off" class="underline-input border-b border-black font-bold px-2 py-0.5 w-36 text-center">
+        દરમિયાન અમો પ્રોસેસ બજાવવા સારુ ગયેલા. જેનો રીપોર્ટ નીચે મુજબ છે. મારે બેઝીક પગાર રૂ.
+        <input type="text" id="basic-pay" oninput="syncAllForms()" autocomplete="off" class="underline-input border-b border-black font-bold px-2 py-0.5 w-28 text-center">
         પ્રતિ માસ છે.
       </div>
     </div>
 
-    <div class="space-y-2">
-      <div class="flex justify-between items-center no-print">
-        <h3 class="text-sm font-bold">પ્રોસેસ બજવણી મુસાફરી પત્રક</h3>
-        <button onclick="addNewDayGroup()" class="bg-sky-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold shadow">+ નવી તારીખ / દિવસ ઉમેરો</button>
+    <div class="border-t-2 border-black pt-2">
+      <div class="flex justify-between items-center mb-2">
+        <h3 class="text-sm font-extrabold">પ્રોસેસ બજવણી મુસાફરી પત્રક</h3>
+        <button onclick="addNewDayGroup()" class="no-print bg-sky-700 hover:bg-sky-800 text-white px-3 py-1 rounded text-xs font-bold shadow">+ નવી તારીખ / દિવસ ઉમેરો</button>
       </div>
       <div class="overflow-x-auto">
-        <table class="w-full text-xs border-collapse border border-black">
+        <table class="w-full border-collapse border border-black text-[11px] leading-tight">
           <thead>
-            <tr class="bg-slate-200 font-bold text-center">
-              <th class="border border-black p-1.5 w-28">તારીખ</th>
-              <th class="border border-black p-1.5">ક્યા ગામથી નીકળ્યા</th>
-              <th class="border border-black p-1.5 w-20">કેટલા વાગે નીકળ્યા</th>
-              <th class="border border-black p-1.5">ક્યા ગામે પહોંચ્યા</th>
-              <th class="border border-black p-1.5 w-20">કેટલા વાગે પહોંચ્યા</th>
-              <th class="border border-black p-1.5 w-24">સાધન નં.</th>
-              <th class="border border-black p-1.5 w-14">કિ. મી.</th>
-              <th class="border border-black p-1.5 w-16">ટકા વારી</th>
-              <th class="border border-black p-1.5 w-20">ભાડુ</th>
-              <th class="border border-black p-1.5 w-20">ભથ્થુ</th>
-              <th class="border border-black p-1.5 w-24 bg-slate-300">કુલ</th>
+            <tr class="bg-slate-200/90 font-bold border-b border-black text-center">
+              <th class="border border-black p-1 w-24">તારીખ</th>
+              <th class="border border-black p-1">ક્યા ગામથી નીકળ્યા</th>
+              <th class="border border-black p-1 w-20">કેટલા વાગે નીકળ્યા</th>
+              <th class="border border-black p-1">ક્યા ગામે પહોંચ્યા</th>
+              <th class="border border-black p-1 w-20">કેટલા વાગે પહોંચ્યા</th>
+              <th class="border border-black p-1 w-24">સાધન નં.</th>
+              <th class="border border-black p-1 w-12">કિ. મી.</th>
+              <th class="border border-black p-1 w-14">ટકા વારી</th>
+              <th class="border border-black p-1 w-16">ભાડુ</th>
+              <th class="border border-black p-1 w-14">ભથ્થુ</th>
+              <th class="border border-black p-1 w-16">કુલ</th>
               <th class="border border-black p-1 w-10 no-print">ક્રિયા</th>
             </tr>
           </thead>
           <tbody id="bailiff-tbody"></tbody>
           <tfoot>
-            <tr class="bg-slate-200 font-bold text-sm">
-              <td colspan="6" class="border border-black p-1.5 text-right">કુલ સરવાળો (Total):</td>
-              <td id="bailiff-total-km" class="border border-black p-1.5 text-center">0</td>
-              <td id="bailiff-total-pct" class="border border-black p-1.5 text-center">-</td>
-              <td id="bailiff-total-fare" class="border border-black p-1.5 text-right">0.00</td>
-              <td id="bailiff-total-da" class="border border-black p-1.5 text-right">0.00</td>
-              <td id="bailiff-grand-total" class="border border-black p-1.5 text-right font-extrabold bg-slate-300">0.00</td>
-              <td class="border border-black no-print"></td>
+            <tr class="bg-slate-200 font-extrabold border-t-2 border-black text-center">
+              <td colspan="6" class="border border-black p-1 text-right">કુલ સરવાળો (Total):</td>
+              <td id="bailiff-total-km" class="border border-black p-1">0</td>
+              <td id="bailiff-total-pct" class="border border-black p-1">0%</td>
+              <td id="bailiff-total-fare" class="border border-black p-1 text-right">0.00</td>
+              <td id="bailiff-total-da" class="border border-black p-1 text-right">0.00</td>
+              <td id="bailiff-grand-total" class="border border-black p-1 text-right">0.00</td>
+              <td class="border border-black p-1 no-print"></td>
             </tr>
           </tfoot>
         </table>
       </div>
     </div>
-    <div class="pt-8 grid grid-cols-2 gap-8 text-center text-xs font-bold">
-      <div><p class="mb-8">તારીખ: _______________</p><p>તપાસનાર ક્લાર્ક ની સહી</p></div>
-      <div><p class="mb-8">સ્થળ: ગાંધીનગર</p><p>બેલીફની સહી</p></div>
+
+    <div class="pt-8 flex justify-between items-end text-xs font-bold">
+      <div class="space-y-4">
+        <div>તારીખ: ______________</div>
+        <div>તપાસનાર ક્લાર્ક ની સહી</div>
+      </div>
+      <div class="space-y-4 text-right">
+        <div>સ્થળ: ગાંધીનગર</div>
+        <div>બેલીફની સહી</div>
+      </div>
     </div>
   </section>
 
@@ -159,65 +168,77 @@ body { font-family: 'Noto Sans Gujarati', 'Inter', sans-serif; color: #000; }
   <section id="tab-ta" class="tab-content page-break print-container bg-white rounded-xl shadow-md border border-slate-300 p-3 sm:p-6 hidden space-y-3">
     <div class="flex justify-between items-center border-b border-black pb-2">
       <div>
-        <h2 class="text-sm font-bold">Travelling allowance Bill of the Establishment/Gazetted</h2>
-        <div class="flex flex-wrap gap-8 text-xs font-bold mt-1">
-          <div>*NAME : <span id="ta-emp-name" class="underline font-extrabold"></span></div>
-          <div>*DESIGNATION : <span class="underline">બેલીફ (Bailiff)</span></div>
-          <div>BASIC PAY : Rs. <span id="ta-emp-pay" class="underline"></span></div>
+        <h2 class="text-base font-extrabold uppercase">Travelling allowance Bill of the Establishment/Gazetted</h2>
+        <div class="flex gap-4 pt-1 text-xs font-bold">
+          <span>*NAME : <span id="ta-emp-name" class="underline"></span></span>
+          <span>*DESIGNATION : <span class="underline">બેલીફ (Bailiff)</span></span>
+          <span>BASIC PAY : Rs. <span id="ta-emp-pay" class="underline font-bold"></span></span>
         </div>
       </div>
     </div>
+
     <div class="overflow-x-auto">
-      <table class="w-full text-[11px] border-collapse border-2 border-black">
+      <table class="w-full border-collapse border-2 border-black text-[10.5px] leading-tight">
         <thead>
-          <tr class="border-b border-black text-center font-bold bg-slate-100">
+          <tr class="text-center font-bold bg-slate-100 border-b border-black">
             <th colspan="6" class="border border-black p-1">Particulars of Journeys and halts</th>
-            <th rowspan="3" class="border border-black p-1 w-24 align-bottom">Kind of<br>Journey<br>i.e. by Rail,<br>Steamer,<br>Road or<br>Trolley<br>7</th>
+            <th rowspan="2" class="border border-black p-1 w-14">Kind of Journey i.e. by Rail, Steamer, Road or Trolley</th>
             <th colspan="3" class="border border-black p-1">Railway / Road Fare</th>
             <th colspan="2" class="border border-black p-1">Distance travelled by road / trolley</th>
-            <th colspan="2" class="border border-black p-1 bg-amber-50/60">Halts / Daily Allowance</th>
-            <th rowspan="3" class="border border-black p-1 w-20 align-bottom bg-amber-50/60">Purpose of<br>Journey<br>15</th>
-            <th rowspan="3" class="border border-black p-1 w-24 align-bottom bg-slate-200 font-extrabold">Total of<br>each line<br>16</th>
+            <th colspan="2" class="border border-black p-1">Halts / Daily Allowance</th>
+            <th rowspan="2" class="border border-black p-1 w-20">Purpose of Journey</th>
+            <th rowspan="2" class="border border-black p-1 w-16">Total of each line</th>
           </tr>
-          <tr class="border-b border-black text-center font-semibold">
+          <tr class="text-center font-bold bg-slate-100 border-b border-black">
             <th colspan="3" class="border border-black p-1">Departure</th>
             <th colspan="3" class="border border-black p-1">Arrival</th>
-            <th rowspan="2" class="border border-black p-1 w-12 align-bottom">Class<br>8</th>
-            <th rowspan="2" class="border border-black p-1 w-12 align-bottom">No. of<br>Fares<br>9</th>
-            <th rowspan="2" class="border border-black p-1 w-20 align-bottom">Amount<br>10</th>
-            <th rowspan="2" class="border border-black p-1 w-16 align-bottom">Ordinary<br>rates<br>11</th>
-            <th rowspan="2" class="border border-black p-1 w-16 align-bottom">Other<br>rates<br>12</th>
-            <th rowspan="2" class="border border-black p-1 w-16 align-bottom bg-amber-50/60">D.A. %<br>13</th>
-            <th rowspan="2" class="border border-black p-1 w-20 align-bottom bg-amber-50/60">D.A. Rs.<br>14</th>
+            <th class="border border-black p-0.5 w-10">Class</th>
+            <th class="border border-black p-0.5 w-10">No. of Fares</th>
+            <th class="border border-black p-0.5 w-14">Amount</th>
+            <th class="border border-black p-0.5 w-12">Ordinary rates</th>
+            <th class="border border-black p-0.5 w-10">Other rates</th>
+            <th class="border border-black p-0.5 w-10">D.A. %</th>
+            <th class="border border-black p-0.5 w-12">D.A. Rs.</th>
           </tr>
-          <tr class="border-b-2 border-black font-semibold text-center">
-            <th class="border border-black p-1">Station<br>1</th>
-            <th class="border border-black p-1 w-20">Date<br>2</th>
-            <th class="border border-black p-1 w-14">Hour<br>3</th>
-            <th class="border border-black p-1">Station<br>4</th>
-            <th class="border border-black p-1 w-20">Date<br>5</th>
-            <th class="border border-black p-1 w-14">Hour<br>6</th>
+          <tr class="text-center font-bold bg-slate-200 border-b-2 border-black text-[9.5px]">
+            <th class="border border-black p-0.5">Station<br>1</th>
+            <th class="border border-black p-0.5">Date<br>2</th>
+            <th class="border border-black p-0.5">Hour<br>3</th>
+            <th class="border border-black p-0.5">Station<br>4</th>
+            <th class="border border-black p-0.5">Date<br>5</th>
+            <th class="border border-black p-0.5">Hour<br>6</th>
+            <th class="border border-black p-0.5">7</th>
+            <th class="border border-black p-0.5">8</th>
+            <th class="border border-black p-0.5">9</th>
+            <th class="border border-black p-0.5">10</th>
+            <th class="border border-black p-0.5">11</th>
+            <th class="border border-black p-0.5">12</th>
+            <th class="border border-black p-0.5">13</th>
+            <th class="border border-black p-0.5">14</th>
+            <th class="border border-black p-0.5">15</th>
+            <th class="border border-black p-0.5">16</th>
           </tr>
         </thead>
         <tbody id="ta-combined-tbody"></tbody>
         <tfoot>
-          <tr class="bg-slate-200 font-extrabold text-xs border-t-2 border-black">
-            <td colspan="7" class="border border-black p-1.5 text-right">કુલ સરવાળો (Total):</td>
-            <td class="border border-black p-1.5 text-center">-</td>
-            <td class="border border-black p-1.5 text-center">-</td>
-            <td id="ta-sum-fare" class="border border-black p-1.5 text-right">0.00</td>
-            <td id="ta-sum-km" class="border border-black p-1.5 text-center">0</td>
-            <td class="border border-black p-1.5 text-center">-</td>
-            <td id="ta-sum-pct" class="border border-black p-1.5 text-center bg-amber-100/70">0%</td>
-            <td id="ta-sum-da" class="border border-black p-1.5 text-right bg-amber-100/70">0.00</td>
-            <td class="border border-black p-1.5 text-center">-</td>
-            <td id="ta-sum-grand" class="border border-black p-1.5 text-right bg-slate-300 text-sm">0.00</td>
+          <tr class="bg-slate-200 font-extrabold border-t-2 border-black text-center">
+            <td colspan="6" class="border border-black p-1 text-right">કુલ સરવાળો (Total):</td>
+            <td class="border border-black p-1">-</td>
+            <td class="border border-black p-1">-</td>
+            <td class="border border-black p-1">-</td>
+            <td id="ta-sum-fare" class="border border-black p-1 text-right">0.00</td>
+            <td id="ta-sum-km" class="border border-black p-1">0</td>
+            <td class="border border-black p-1">-</td>
+            <td id="ta-sum-pct" class="border border-black p-1">0.00 %</td>
+            <td id="ta-sum-da" class="border border-black p-1 text-right">0.00</td>
+            <td class="border border-black p-1">-</td>
+            <td id="ta-sum-grand" class="border border-black p-1 text-right">0.00</td>
           </tr>
         </tfoot>
       </table>
     </div>
-    <div class="pt-1 text-[10px] leading-tight">
-      <p>*In the case of Gazetted Government Servant | Note: (1) In the case of Non-Gazetted Establishment similar particular of Name, Designation. (2) Please See, G.R.F.D., No. TJN-1071-2514-GH, Dated 15th June, 1971.</p>
+    <div class="text-[10px] text-slate-600 pt-1">
+      *In the case of Gazetted Government Servant | Note: (1) In the case of Non-Gazetted Establishment similar particular of Name, Designation. (2) Please See, G.R.F.D., No. TJN-1071-2514-GH, Dated 15th June, 1971.
     </div>
   </section>
 
@@ -225,13 +246,810 @@ body { font-family: 'Noto Sans Gujarati', 'Inter', sans-serif; color: #000; }
   <section id="tab-cert" class="tab-content page-break print-container bg-white rounded-xl shadow-md border border-slate-300 p-4 sm:p-8 hidden space-y-2">
     <div class="space-y-1.5 text-xs font-semibold">
       <div class="flex items-center"><span class="font-bold text-sm">Government Servant For the Month of</span><span id="cert-month-disp" class="pdf-no-line flex-1 ml-2 px-2 font-bold"></span></div>
-      <div class="flex items-center"><span class="w-16">Pay</span><span id="cert-pay-disp" class="pdf-no-line w-48 text-center font-bold"></span><span class="ml-1 font-bold">₹</span></div>
-      <div class="flex items-center"><span class="w-16">P. T. A.</span><span class="border-b border-black w-48"></span></div>
-      <div class="flex items-center"><span class="w-16">C. A.</span><span class="border-b border-black w-48"></span><span class="ml-4 font-bold">Head Quarter :</span><span class="pdf-no-line w-40 text-center font-bold ml-1">ગાંધીનગર</span></div>
+      <div class="flex items-center"><span class="font-bold">Pay Rs.</span><span id="cert-pay-disp" class="pdf-no-line w-32 ml-2 px-2 font-bold"></span></div>
     </div>
+    <div class="border-2 border-black col-11-17-grid min-h-[460px] p-2 text-xs relative">
+      <div class="text-right text-[11px] font-bold pb-2">COLUMNS 11 TO 17</div>
+      <div class="space-y-3.5 pt-6 text-[11px] sm:text-[12px] leading-relaxed max-w-2xl bg-white/95 p-3 rounded">
+        <div class="flex gap-3"><span class="font-extrabold border border-black rounded-full w-6 h-6 flex items-center justify-center shrink-0">૧</span><p>આથી પ્રમાણપત્ર આપવામાં આવે છે કે ઉપરોક્ત મુસાફરી સરકારી કામ અર્થે કરવામાં આવેલ છે.</p></div>
+        <div class="flex gap-3"><span class="font-extrabold border border-black rounded-full w-6 h-6 flex items-center justify-center shrink-0">૨</span><p>આથી પ્રમાણપત્ર આપવામાં આવે છે કે સદરહુ કર્મચારીએ જે વાહન દ્વારા મુસાફરી દર્શાવેલ છે તે વાહનનો ઉપયોગ કરેલ છે.</p></div>
+        <div class="flex gap-3"><span class="font-extrabold border border-black rounded-full w-6 h-6 flex items-center justify-center shrink-0">૩</span><p>આથી પ્રમાણપત્ર આપવામાં આવે છે કે સદરહુ બિલમાં દર્શાવેલ મુસાફરી ભથ્થાનો દર સરકારશ્રીના નિયમોનુસાર છે.</p></div>
+        <div class="flex gap-3"><span class="font-extrabold border border-black rounded-full w-6 h-6 flex items-center justify-center shrink-0">૪</span><p>આથી પ્રમાણપત્ર આપવામાં આવે છે કે સદરહુ બિલમાં દર્શાવેલ તમામ એન્ટ્રીઓની નાજરશ્રીએ બેલીફ ડાયરી સાથે ચકાસેલ છે.</p></div>
+        <div class="flex gap-3">
+          <span class="font-extrabold border border-black rounded-full w-6 h-6 flex items-center justify-center shrink-0">૫</span>
+          <p><span id="cert-bailiff-name" class="underline font-extrabold"></span> ને માહે- <span id="cert-period" class="underline font-extrabold"></span> દરમિયાન કુલ <span id="cert-total-proc" class="underline font-extrabold px-1">0</span> પ્રોસેસ આવેલ છે જે પૈકી <span id="cert-served-proc" class="underline font-extrabold px-1">0</span> પ્રોસેસ બજવણી કરી તેમજ <span id="cert-unserved-proc" class="underline font-extrabold px-1">0</span> પ્રોસેસ વગર બજે રજુ કરેલ છે જે બજવણીની ટકાવારી <span id="cert-pct-proc" class="underline font-extrabold px-1">0%</span> થાય છે.</p>
+        </div>
+        <div class="flex gap-3"><span class="font-extrabold border border-black rounded-full w-6 h-6 flex items-center justify-center shrink-0">૬</span><p>આથી પ્રમાણપત્ર આપવામાં આવે છે કે સદરહુ કર્મચારીએ ૮ (આઠ) કિલોમીટર થી વધુ મુસાફરી કરેલ છે. જેથી તેઓને બિલ મળવા પાત્ર થાય છે.</p></div>
+      </div>
+    </div>
+    <div class="text-[10px] pt-1">No. TJN/1071/4774/GH, dated 24th January, 1974.</div>
+  </section>
 
-    <div class="border-2 border-black mt-2">
-      <table class="w-full text-[11px] border-collapse border-b-2 border-black text-center">
-        <thead>
-          <tr>
-            <th colspan="
+  <!-- PAGE 4: CLOSING SUMMARY, STAMP & SUB-TREASURY -->
+  <section id="tab-closing" class="tab-content page-break print-container bg-white rounded-xl shadow-md border border-slate-300 p-4 sm:p-8 hidden">
+    <div class="grid grid-cols-12 border-2 border-black text-xs">
+      <!-- LEFT HALF -->
+      <div class="col-span-7 border-r-2 border-black flex flex-col justify-between">
+        <div class="p-3 border-b border-black">
+          <p class="font-semibold text-justify">Certified that I have satisfied myself that the amounts included in bills drawn 1 month/2 months/3 months previous to this date, with the exception of those detailed of (of which the total has been refunded by deduction from this bill) have been disbursed to the Government servants there in named and their receipts taken on the office copy of the bill or in a separate acquittance roll.</p>
+          <div class="text-right pt-6 pr-2 font-bold">(Government Servant)</div>
+        </div>
+        <div class="p-3 space-y-4 border-b border-black">
+          <div>PASSED for Rs. (In words) : <input type="text" id="passed-words" autocomplete="off" class="underline-input border-b border-black w-full font-bold mt-1"></div>
+          <div class="flex justify-between pt-3"><span>Dated ______________ 202</span><span class="font-bold pr-4">Head of Office.</span></div>
+          <div class="text-right pt-6 pr-4 font-bold">(Controlling Officer.)</div>
+        </div>
+        <div class="p-3 space-y-5 border-b border-black">
+          <div>Pay Rupees. (in words and figures) <input type="text" id="pay-words-fig" autocomplete="off" class="underline-input border-b border-black w-full font-bold mt-1"></div>
+          <div class="flex justify-between items-end pt-5">
+            <span>Date ______________</span>
+            <div class="text-center"><p class="border-b border-black pb-0.5 font-semibold">Accountant/Treasury Officer/P.A.O.</p><p class="font-semibold pt-0.5">Sub-Treasury Officer.</p></div>
+          </div>
+        </div>
+        <div class="p-3 space-y-4">
+          <div class="text-center font-bold underline">FOR USE IN AUDIT OFFICE</div>
+          <p>Admitted for Rs. ______________________</p>
+          <p>Disallowed Rs. ______________________</p>
+          <div class="flex justify-between pt-6 font-semibold"><span>Auditor</span><span>Section Officer</span></div>
+        </div>
+      </div>
+
+      <!-- RIGHT HALF -->
+      <div class="col-span-5 flex flex-col justify-between">
+        <div>
+          <div class="p-2 border-b-2 border-black font-extrabold bg-slate-100 flex justify-between"><span>DETAILS</span><span>Rs. Ps.</span></div>
+          <div class="p-2 space-y-1.5 border-b border-black text-[11px]">
+            <div class="flex justify-between"><span>Railway, Steamer Fare (Col. 10)</span><span class="font-bold">0.00</span></div>
+            <div class="flex justify-between"><span>Road Mileage @ <span id="close-rate-disp">2.50</span>/km</span><span id="close-col10-rs" class="font-bold">0.00</span></div>
+            <div class="flex justify-between"><span>Daily Allowance (Col. 14)</span><span id="close-col14-rs" class="font-bold">0.00</span></div>
+            <div class="flex justify-between"><span>Incidentals / Toll</span><span class="font-bold">0.00</span></div>
+            <div class="flex justify-between border-t border-black pt-1 font-bold"><span>Total Amount</span><span id="close-total-rs">0.00</span></div>
+            <div class="flex justify-between text-slate-600"><span>Deduct: Advance / Retrenched</span><span>0.00</span></div>
+            <div class="flex justify-between border-t-2 border-black pt-1 font-extrabold text-sm"><span>Net Claim</span><span id="close-net-rs">0.00</span></div>
+          </div>
+        </div>
+        <div class="p-4 border-b border-black text-center">
+          <div class="border-2 border-dashed border-black w-36 h-28 mx-auto flex items-center justify-center font-bold text-slate-500">
+            રેવન્યુ સ્ટેમ્પ<br>(1 Rupee Stamp)
+          </div>
+        </div>
+        <div class="p-3 text-center space-y-8">
+          <p class="font-bold underline">SUB-TREASURY</p>
+          <div class="pt-4"><p class="font-bold">Sub-Treasury Officer,</p><p class="text-xs">Principal Civil Judge Court, Gandhinagar</p></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PAGE 5: FORM G.T.R. NO. 35 -->
+  <section id="tab-gtr" class="tab-content page-break print-container bg-white rounded-xl shadow-md border border-slate-300 p-4 sm:p-8 hidden space-y-4">
+    <div class="text-center space-y-1">
+      <h2 class="text-lg font-extrabold">FORM G. T. R. No. 35</h2>
+      <p class="text-xs font-semibold">(See Rule 169 and 186)</p>
+      <div class="flex justify-end text-xs font-bold"><span>Bill Register No.</span><input type="text" id="bill-reg-no" autocomplete="off" class="underline-input border-b border-black w-32 ml-1 text-center"></div>
+      <div class="text-left text-xs font-semibold">Travelling Allowance Bill of the Establishment/Gazetted Government Servants. Office of the <input type="text" value="Principal Civil Judge Court, Gandhinagar" autocomplete="off" class="pdf-no-line font-bold w-72 px-1"></div>
+    </div>
+    <div class="border-t-2 border-b-2 border-black py-2 space-y-1.5 text-xs">
+      <div class="text-center font-bold underline">(For Use in Treasury)</div>
+      <div><span class="font-semibold">Name of the Treasury :</span> <input type="text" id="treasury-name" value="District Treasury Office, Gandhinagar" autocomplete="off" class="pdf-no-line w-72 px-1 font-bold"></div>
+      <div class="grid grid-cols-3 gap-2 pt-1"><div>Bill Transit Reg. Sr. No. _______ Date _______</div><div class="text-center">Token No. _______</div><div class="text-right">Date _______</div></div>
+    </div>
+    <div class="space-y-2 text-xs">
+      <div class="flex items-center gap-2 font-bold"><span>Head of Account :</span><div class="flex gap-1"><span class="char-box">2</span><span class="char-box">0</span><span class="char-box">1</span><span class="char-box">4</span><span class="char-box">0</span><span class="char-box">0</span><span class="char-box">1</span><span class="char-box">0</span><span class="char-box">5</span><span class="char-box">0</span><span class="char-box">1</span></div></div>
+      <div class="flex items-center gap-2"><span>Demand No. :</span><span class="font-bold border border-black px-2 py-0.5">044</span></div>
+      <div class="grid grid-cols-12 border-2 border-black mt-2">
+        <div class="col-span-8 border-r border-black p-2 space-y-1"><p class="font-bold">ADMINISTRATION OF JUSTICE</p><p>(A) CIVIL & SESSION COURTS</p><p>(B) DISTRICT & SESSION JUDGES (01)</p><p class="pt-2 font-bold underline">04 - TRAVEL EXPENSES (DOMESTIC)</p></div>
+        <div class="col-span-4 p-2 flex flex-col justify-between"><div class="text-center font-bold">AMOUNT</div><div class="text-right text-base font-extrabold">Rs. <span id="gtr-dom-rs">0</span>/-</div><div class="text-[10px] text-right text-slate-500">Gross = Net Amount</div></div>
+      </div>
+    </div>
+    <div class="grid grid-cols-2 gap-4 border border-black p-3 text-xs">
+      <div><p class="font-bold underline pb-1">CERTIFICATES</p><ol class="list-decimal pl-4 space-y-1 text-[11px]"><li>Certified that the claims are authentic.</li><li>No part has been previously drawn.</li><li>Controlling officer sanctions the journey.</li></ol></div>
+      <div class="text-right space-y-8"><p>Principal Civil Judge Court, Gandhinagar</p><p class="font-bold pt-6">Drawing & Disbursing Officer (DDO)</p></div>
+    </div>
+    <div class="border border-black p-2 text-center text-xs space-y-1 bg-slate-50"><p class="font-bold underline">TREASURY ENDORSEMENT</p><p>Pay to <b>Bailiff (Establishment)</b> Rs. ____________ (Rupees ____________________________________________)</p><div class="flex justify-between pt-6 font-semibold"><span>Auditor</span><span>Treasury Officer</span></div></div>
+  </section>
+
+  <!-- SAVED BILLS TAB -->
+  <section id="tab-saved" class="tab-content no-print bg-white rounded-xl shadow-md border border-slate-200 p-4 hidden space-y-4">
+    <div class="flex justify-between items-center border-b pb-2">
+      <h2 class="text-lg font-bold">સેવ કરેલા તમામ બિલ</h2>
+      <button onclick="syncFromGoogleSheet(false)" class="bg-sky-700 hover:bg-sky-800 text-white rounded-lg px-3 py-1.5 text-xs font-bold shadow flex items-center gap-1">
+        <span>🔄</span> <span>ગૂગલ શીટમાંથી તાજા રેકોર્ડ લાવો</span>
+      </button>
+    </div>
+    <div class="flex flex-wrap gap-2 items-center">
+      <input id="saved-search" type="search" oninput="renderSavedBillsUI()" placeholder="નામ / મહિનો / તારીખથી શોધો..." class="border rounded-lg px-3 py-2 text-sm flex-1 min-w-[220px]">
+    </div>
+    <p id="sync-status" class="text-xs text-slate-500 font-semibold"></p>
+    <div id="saved-bills-container" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
+  </section>
+
+</main>
+
+<script>
+let dayCounter = 0, currentBillId = null;
+
+// તમારી Google Apps Script Web App લિંક:
+const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwBCW2JHltXHmRceZ345Z6OTGgAkbXD3MX2TJYOrSKg0GUdQGM9FMYrwwFn1NafVbRa/exec";
+
+document.addEventListener("DOMContentLoaded", () => {
+  try {
+    if (window.lucide && typeof window.lucide.createIcons === "function") window.lucide.createIcons();
+    initFreshPageEveryTime();
+    syncFromGoogleSheet(true); // background silent auto-sync
+  } catch (error) {
+    console.error("પેજ શરૂ કરવામાં સમસ્યા:", error);
+  }
+});
+
+function initFreshPageEveryTime() {
+  currentBillId = null;
+  dayCounter = 0;
+
+  const gujMonths = ["જાન્યુઆરી", "ફેબ્રુઆરી", "માર્ચ", "એપ્રિલ", "મે", "જૂન", "જુલાઈ", "ઓગસ્ટ", "સપ્ટેમ્બર", "ઓક્ટોબર", "નવેમ્બર", "ડિસેમ્બર"];
+  const now = new Date();
+  const currentMonth = gujMonths[now.getMonth()] + "-" + now.getFullYear();
+
+  const bNameEl = document.getElementById('bailiff-name');
+  if (bNameEl) bNameEl.value = "";
+
+  const fMEl = document.getElementById('from-month');
+  if (fMEl) fMEl.value = currentMonth;
+
+  const tMEl = document.getElementById('to-month');
+  if (tMEl) tMEl.value = currentMonth;
+
+  const payEl = document.getElementById('basic-pay');
+  if (payEl) payEl.value = "";
+
+  const procTot = document.getElementById('proc-total');
+  if (procTot) procTot.value = "0";
+
+  const procSrv = document.getElementById('proc-served');
+  if (procSrv) procSrv.value = "0";
+
+  const tbody = document.getElementById('bailiff-tbody');
+  if (tbody) tbody.innerHTML = "";
+
+  const todayStr = now.toISOString().split('T')[0];
+  addNewDayGroup(todayStr, "30", null, []);
+
+  calcProcessPct();
+  recalculateAll();
+  switchTab('bailiff');
+}
+
+function switchTab(tabId) {
+  try {
+    document.body.classList.remove('print-all-mode');
+    
+    // Hide all sections
+    document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+    
+    // Reset all tab button styles
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      if (btn.id === 'tab-btn-saved') {
+        btn.className = "tab-btn px-2.5 py-2 text-xs font-bold rounded-lg bg-amber-950/60 text-amber-300 border border-amber-500/50 hover:bg-amber-900/70 flex items-center justify-center gap-1 cursor-pointer transition select-none";
+      } else {
+        btn.className = "tab-btn px-2.5 py-2 text-xs font-bold rounded-lg bg-slate-700 text-slate-200 hover:bg-slate-600 flex items-center justify-center cursor-pointer transition select-none";
+      }
+    });
+
+    // Activate selected section
+    const targetSection = document.getElementById(`tab-${tabId}`);
+    if (targetSection) {
+      targetSection.classList.remove('hidden');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // Highlight active button
+    const activeBtn = document.getElementById(`tab-btn-${tabId}`);
+    if (activeBtn) {
+      if (tabId === 'saved') {
+        activeBtn.className = "tab-btn px-2.5 py-2 text-xs font-black rounded-lg bg-amber-500 text-slate-950 shadow-md border-2 border-white flex items-center justify-center gap-1 cursor-pointer transition select-none";
+      } else {
+        activeBtn.className = "tab-btn px-2.5 py-2 text-xs font-black rounded-lg bg-sky-600 text-white shadow-md border-2 border-white flex items-center justify-center cursor-pointer transition select-none";
+      }
+    }
+
+    // Refresh data
+    if (tabId === 'saved') {
+      renderSavedBillsUI();
+      syncFromGoogleSheet(false);
+    } else {
+      syncAllForms();
+    }
+  } catch (err) {
+    console.error("switchTab error:", err);
+  }
+}
+
+function printAllPages() {
+  syncAllForms();
+  document.getElementById('page-orientation-style').innerHTML = `@page { size: A4 portrait; margin: 6mm; }`;
+  document.body.classList.add('print-all-mode');
+  window.print();
+  setTimeout(() => document.body.classList.remove('print-all-mode'), 1000);
+}
+
+function printLandscapeCombined() {
+  switchTab('ta');
+  document.getElementById('page-orientation-style').innerHTML = `@page { size: A4 landscape; margin: 6mm; }`;
+  window.print();
+}
+
+function printPortraitPage() {
+  const active = document.querySelector('.tab-content:not(.hidden)');
+  if (active && active.id === 'tab-ta') { printLandscapeCombined(); return; }
+  document.getElementById('page-orientation-style').innerHTML = `@page { size: A4 portrait; margin: 8mm; }`;
+  document.body.classList.remove('print-all-mode');
+  window.print();
+}
+
+function calcProcessPct() {
+  const total = parseInt(document.getElementById('proc-total').value) || 0;
+  const served = parseInt(document.getElementById('proc-served').value) || 0;
+  const unserved = Math.max(0, total - served);
+  const pct = total > 0 ? Math.round((served / total) * 100) : 0;
+  document.getElementById('proc-unserved-disp').innerText = unserved;
+  document.getElementById('proc-pct-disp').innerText = pct + "%";
+  document.getElementById('cert-total-proc').innerText = total;
+  document.getElementById('cert-served-proc').innerText = served;
+  document.getElementById('cert-unserved-proc').innerText = unserved;
+  document.getElementById('cert-pct-proc').innerText = pct + "%";
+}
+
+function addNewDayGroup(dateStr = "", pct = "30", customDa = null, journeys = []) {
+  dayCounter++;
+  const dayId = `day-${dayCounter}`;
+  const tbody = document.getElementById('bailiff-tbody');
+  const fullDa = parseFloat(document.getElementById('full-da-rate').value) || 300;
+  const calcDa = customDa !== null && customDa !== '' ? (parseFloat(customDa) || 0) : Math.round((fullDa * (parseInt(pct, 10) || 0)) / 100);
+
+  const allowanceTr = document.createElement('tr');
+  allowanceTr.id = `${dayId}-allowance`;
+  allowanceTr.dataset.dayid = dayId;
+  allowanceTr.className = "bg-amber-50/70 font-bold border-b-2 border-black";
+  allowanceTr.innerHTML = `
+    <td colspan="7" class="border border-black p-1 text-left">
+      <div class="flex items-center justify-between no-print">
+        <div class="flex gap-1">
+          <button onclick="addJourneyRow('${dayId}')" class="bg-sky-100 text-sky-900 px-2 py-0.5 rounded text-[11px] font-bold">+ ગામ ઉમેરો</button>
+          <button onclick="addReturnGandhinagar('${dayId}')" class="bg-emerald-100 text-emerald-900 px-2 py-0.5 rounded text-[11px] font-bold">↩ રિટર્ન ગાંધીનગર</button>
+        </div>
+        <span class="text-[11px]">દૈનિક ભથ્થું (D.A.):</span>
+      </div>
+    </td>
+    <td class="border border-black p-1">
+      <select onchange="onPctChange(this)" class="day-pct w-full text-center font-bold bg-transparent">
+        <option value="0" ${pct=="0"?"selected":""}>0%</option>
+        <option value="30" ${pct=="30"?"selected":""}>30%</option>
+        <option value="50" ${pct=="50"?"selected":""}>50%</option>
+        <option value="70" ${pct=="70"?"selected":""}>70%</option>
+        <option value="100" ${pct=="100"?"selected":""}>100%</option>
+      </select>
+    </td>
+    <td class="border border-black p-1 text-center">-</td>
+    <td class="border border-black p-1"><input type="number" value="${calcDa}" oninput="recalculateAll()" autocomplete="off" class="day-da-input w-full text-right font-bold bg-transparent"></td>
+    <td class="border border-black p-1 text-right font-extrabold day-da-total">${calcDa.toFixed(2)}</td>
+    <td class="border border-black p-1 text-center no-print"><button onclick="removeEntireDay('${dayId}')" class="text-rose-600 font-bold">✕</button></td>`;
+  tbody.appendChild(allowanceTr);
+
+  if (journeys.length > 0) {
+    journeys.forEach((j, idx) => addJourneyRow(dayId, j.from, j.out, j.to, j.in, j.veh, j.km, idx === 0 ? dateStr : ""));
+  } else {
+    addJourneyRow(dayId, "ગાંધીનગર", "10:00", "", "", "મોટર સાઈકલ", "", dateStr);
+  }
+}
+
+function addJourneyRow(dayId, from="", outTime="", to="", inTime="", veh="મોટર સાઈકલ", km="", dateVal="") {
+  const allowanceRow = document.getElementById(`${dayId}-allowance`);
+  const existingRows = document.querySelectorAll(`.${dayId}-row`);
+  const isFirst = existingRows.length === 0;
+  if (!from && existingRows.length > 0) {
+    const lastRow = existingRows[existingRows.length - 1];
+    from = lastRow.querySelector('.to-input').value || "";
+    outTime = lastRow.querySelector('.in-input').value || "";
+  }
+  const tr = document.createElement('tr');
+  tr.className = `journey-row ${dayId}-row`;
+  tr.innerHTML = `
+    <td class="border border-black p-1 text-center font-bold">${isFirst ? `<input type="date" value="${dateVal}" onchange="recalculateAll()" autocomplete="off" class="day-date w-full text-center font-bold bg-transparent">` : ''}</td>
+    <td class="border border-black p-1"><input type="text" list="village-list" value="${from}" oninput="recalculateAll()" autocomplete="off" class="from-input w-full px-1"></td>
+    <td class="border border-black p-1"><input type="time" value="${outTime}" oninput="recalculateAll()" autocomplete="off" class="out-input w-full text-center"></td>
+    <td class="border border-black p-1"><input type="text" list="village-list" value="${to}" oninput="recalculateAll()" autocomplete="off" class="to-input w-full px-1"></td>
+    <td class="border border-black p-1"><input type="time" value="${inTime}" oninput="recalculateAll()" autocomplete="off" class="in-input w-full text-center"></td>
+    <td class="border border-black p-1"><input type="text" value="${veh}" oninput="recalculateAll()" autocomplete="off" class="veh-input w-full text-center"></td>
+    <td class="border border-black p-1"><input type="number" value="${km}" oninput="recalculateAll()" autocomplete="off" class="km-input w-full text-center font-bold bg-yellow-50"></td>
+    <td class="border border-black p-1"></td>
+    <td class="border border-black p-1 text-right font-bold fare-cell"></td>
+    <td class="border border-black p-1"></td>
+    <td class="border border-black p-1 text-right font-bold total-cell"></td>
+    <td class="border border-black p-1 text-center no-print"><button onclick="removeJourneyRow(this, '${dayId}')" class="text-slate-400 hover:text-rose-600 font-bold">✕</button></td>`;
+  allowanceRow.parentNode.insertBefore(tr, allowanceRow);
+  recalculateAll();
+}
+
+function addReturnGandhinagar(dayId) {
+  const rows = document.querySelectorAll(`.${dayId}-row`);
+  let lastTo = "પેથાપુર", lastIn = "18:00";
+  if (rows.length > 0) {
+    const last = rows[rows.length - 1];
+    lastTo = last.querySelector('.to-input').value || "પેથાપુર";
+    lastIn = last.querySelector('.in-input').value || "18:00";
+  }
+  let [h, m] = lastIn.split(':').map(Number);
+  m = (m || 0) + 15;
+  if (m >= 60) { h = ((h || 0) + 1) % 24; m -= 60; }
+  const outT = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+  m += 30;
+  if (m >= 60) { h = (h + 1) % 24; m -= 60; }
+  const inT = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+  addJourneyRow(dayId, lastTo, outT, "ગાંધીનગર", inT, "મોટર સાઈકલ", 8);
+}
+
+function removeJourneyRow(btn, dayId) {
+  const tr = btn.closest('tr');
+  const wasFirst = tr.querySelector('.day-date') !== null;
+  const savedDate = wasFirst ? tr.querySelector('.day-date').value : "";
+  tr.remove();
+  const remaining = document.querySelectorAll(`.${dayId}-row`);
+  if (remaining.length === 0) {
+    document.getElementById(`${dayId}-allowance`).remove();
+  } else if (wasFirst) {
+    const newFirst = remaining[0];
+    if (newFirst) newFirst.cells[0].innerHTML = `<input type="date" value="${savedDate}" onchange="recalculateAll()" autocomplete="off" class="day-date w-full text-center font-bold bg-transparent">`;
+  }
+  recalculateAll();
+}
+
+function removeEntireDay(dayId) {
+  document.querySelectorAll(`.${dayId}-row`).forEach(r => r.remove());
+  const allow = document.getElementById(`${dayId}-allowance`);
+  if (allow) allow.remove();
+  recalculateAll();
+}
+
+function onPctChange(sel) {
+  const tr = sel.closest('tr');
+  const pct = parseInt(sel.value, 10) || 0;
+  const fullDa = parseFloat(document.getElementById('full-da-rate').value) || 300;
+  const calcDa = Math.round((fullDa * pct) / 100);
+  tr.querySelector('.day-da-input').value = calcDa;
+  recalculateAll();
+}
+
+function recalculateAll() {
+  const rate = parseFloat(document.getElementById('km-rate').value) || 2.5;
+  let totalKm = 0, totalFare = 0, totalDa = 0, totalPct = 0;
+  document.querySelectorAll('.journey-row').forEach(row => {
+    const km = parseFloat(row.querySelector('.km-input').value) || 0;
+    const fare = km * rate;
+    row.querySelector('.fare-cell').innerText = km > 0 ? fare.toFixed(2) : "";
+    row.querySelector('.total-cell').innerText = km > 0 ? fare.toFixed(2) : "";
+    totalKm += km; totalFare += fare;
+  });
+  document.querySelectorAll('tr[id$="-allowance"]').forEach(allowRow => {
+    const da = parseFloat(allowRow.querySelector('.day-da-input').value) || 0;
+    const pct = parseInt(allowRow.querySelector('.day-pct').value) || 0;
+    allowRow.querySelector('.day-da-total').innerText = da.toFixed(2);
+    totalDa += da; totalPct += pct;
+  });
+  const grand = totalFare + totalDa;
+  document.getElementById('bailiff-total-km').innerText = totalKm;
+  document.getElementById('bailiff-total-pct').innerText = (totalPct / 100).toFixed(2) + "%";
+  document.getElementById('bailiff-total-fare').innerText = totalFare.toFixed(2);
+  document.getElementById('bailiff-total-da').innerText = totalDa.toFixed(2);
+  document.getElementById('bailiff-grand-total').innerText = grand.toFixed(2);
+  syncAllForms();
+}
+
+function syncAllForms() {
+  const bName = document.getElementById('bailiff-name').value || "____________________";
+  const fromM = document.getElementById('from-month').value || "";
+  const toM = document.getElementById('to-month').value || "";
+  const pay = document.getElementById('basic-pay').value || "";
+  const rate = parseFloat(document.getElementById('km-rate').value) || 2.5;
+  const totalKm = document.getElementById('bailiff-total-km').innerText;
+  const totalFare = parseFloat(document.getElementById('bailiff-total-fare').innerText) || 0;
+  const totalDa = parseFloat(document.getElementById('bailiff-total-da').innerText) || 0;
+  const grand = parseFloat(document.getElementById('bailiff-grand-total').innerText) || 0;
+
+  document.getElementById('gtr-dom-rs').innerText = Math.round(grand);
+  document.getElementById('ta-emp-name').innerText = bName;
+  document.getElementById('ta-emp-pay').innerText = pay;
+  document.getElementById('cert-month-disp').innerText = `${fromM} થી ${toM}`;
+  document.getElementById('cert-pay-disp').innerText = pay;
+  document.getElementById('cert-bailiff-name').innerText = bName;
+  document.getElementById('cert-period').innerText = `${fromM} થી ${toM}`;
+  calcProcessPct();
+
+  document.getElementById('close-col10-rs').innerText = Math.round(totalFare);
+  document.getElementById('close-rate-disp').innerText = rate.toFixed(2);
+  document.getElementById('close-col14-rs').innerText = Math.round(totalDa);
+  document.getElementById('close-total-rs').innerText = Math.round(grand);
+  document.getElementById('close-net-rs').innerText = Math.round(grand);
+  document.getElementById('pay-words-fig').value = `Rs. ${Math.round(grand)}/-`;
+
+  const taTbody = document.getElementById('ta-combined-tbody');
+  taTbody.innerHTML = "";
+  let totalPctSum = 0;
+
+  document.querySelectorAll('tr[id$="-allowance"]').forEach(allowRow => {
+    const dayId = allowRow.dataset.dayid;
+    const dateEl = document.querySelector(`.${dayId}-row .day-date`);
+    const rawDate = dateEl ? dateEl.value : "";
+    const dispDate = formatDateDDMMYYYY(rawDate);
+    document.querySelectorAll(`.${dayId}-row`).forEach((r, idx) => {
+      const from = r.querySelector('.from-input').value;
+      const outT = r.querySelector('.out-input').value;
+      const to = r.querySelector('.to-input').value;
+      const inT = r.querySelector('.in-input').value;
+      const veh = r.querySelector('.veh-input').value;
+      const km = parseFloat(r.querySelector('.km-input').value) || 0;
+      const fare = km * rate;
+      if (from || to || km > 0) {
+        taTbody.innerHTML += `
+          <tr class="border-b border-slate-400">
+            <td class="border border-black p-1 village-cell">${escapeHtml(from)}</td>
+            <td class="border border-black p-1 text-center">${idx===0?dispDate:',,'}</td>
+            <td class="border border-black p-1 text-center">${escapeHtml(outT)}</td>
+            <td class="border border-black p-1 village-cell">${escapeHtml(to)}</td>
+            <td class="border border-black p-1 text-center">${idx===0?dispDate:',,'}</td>
+            <td class="border border-black p-1 text-center">${escapeHtml(inT)}</td>
+            <td class="border border-black p-1 text-center">${idx===0?escapeHtml(veh):',,'}</td>
+            <td class="border border-black p-1 text-center font-bold">${km || ''}</td>
+            <td class="border border-black p-1 text-center">${idx===0?rate.toFixed(2):',,'}</td>
+            <td class="border border-black p-1 text-right font-bold">${fare.toFixed(2)}</td>
+            <td class="border border-black p-1 text-center font-bold">${km || ''}</td>
+            <td class="border border-black p-1 text-center">-</td>
+            <td class="border border-black p-1 text-center">-</td>
+            <td class="border border-black p-1 text-right">-</td>
+            <td class="border border-black p-1 text-center">પ્રોસેસ બજવણી</td>
+            <td class="border border-black p-1 text-right font-bold">${fare.toFixed(2)}</td>
+          </tr>`;
+      }
+    });
+    const da = parseFloat(allowRow.querySelector('.day-da-input').value) || 0;
+    const pct = parseInt(allowRow.querySelector('.day-pct').value) || 0;
+    totalPctSum += pct;
+    taTbody.innerHTML += `
+      <tr class="border-b-2 border-black font-bold bg-amber-50/60">
+        <td class="border border-black p-1" colspan="12">દૈનિક ભથ્થું (D.A.)</td>
+        <td class="border border-black p-1 text-center">${pct}%</td>
+        <td class="border border-black p-1 text-right">${da.toFixed(2)}</td>
+        <td class="border border-black p-1 text-center">પ્રોસેસ બજવણી</td>
+        <td class="border border-black p-1 text-right">${da.toFixed(2)}</td>
+      </tr>`;
+  });
+
+  document.getElementById('ta-sum-km').innerText = totalKm;
+  document.getElementById('ta-sum-fare').innerText = totalFare.toFixed(2);
+  document.getElementById('ta-sum-pct').innerText = (totalPctSum / 100).toFixed(2) + " %";
+  document.getElementById('ta-sum-da').innerText = totalDa.toFixed(2);
+  document.getElementById('ta-sum-grand').innerText = grand.toFixed(2);
+}
+
+function getLocalBills() {
+  try { return JSON.parse(localStorage.getItem('bailiff_saved_bills') || '[]'); }
+  catch (e) { return []; }
+}
+
+function putLocalBill(bill) {
+  const list = getLocalBills();
+  const idx = list.findIndex(b => b.id === bill.id);
+  if (idx >= 0) list[idx] = bill; else list.unshift(bill);
+  localStorage.setItem('bailiff_saved_bills', JSON.stringify(list));
+}
+
+function setSyncStatus(message, isError=false) {
+  const el = document.getElementById('sync-status');
+  if (el) { el.textContent = message; el.className = 'text-xs ' + (isError ? 'text-rose-700 font-bold' : 'text-slate-500 font-semibold'); }
+}
+
+function formatDateDDMMYYYY(value) {
+  if (!value) return '';
+  const m = String(value).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  return m ? `${m[3]}-${m[2]}-${m[1]}` : String(value);
+}
+
+function escapeHtml(value) {
+  return String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+}
+
+function collectBillObject() {
+  const rate = parseFloat(document.getElementById('km-rate').value) || 2.5;
+  const days = [];
+  document.querySelectorAll('tr[id$="-allowance"]').forEach(allowRow => {
+    const dayId = allowRow.dataset.dayid;
+    const dateEl = document.querySelector(`.${dayId}-row .day-date`);
+    const journeys = [];
+    document.querySelectorAll(`.${dayId}-row`).forEach(r => {
+      const km = parseFloat(r.querySelector('.km-input').value) || 0;
+      journeys.push({
+        date: r.querySelector('.day-date')?.value || (document.querySelector(`.${r.classList[1]} .day-date`)?.value || ''),
+        from: r.querySelector('.from-input').value, out: r.querySelector('.out-input').value,
+        to: r.querySelector('.to-input').value, in: r.querySelector('.in-input').value,
+        veh: r.querySelector('.veh-input').value, km: km, fare: (km * rate).toFixed(2)
+      });
+    });
+    days.push({ date: dateEl ? dateEl.value : "", pct: allowRow.querySelector('.day-pct').value, da: allowRow.querySelector('.day-da-input').value, journeys });
+  });
+  return {
+    id: currentBillId || 'bill_' + Date.now(), updatedAt: new Date().toLocaleString('gu-IN'),
+    courtTitle: document.getElementById('court-title').value, bailiffName: document.getElementById('bailiff-name').value || "અનામી બેલીફ",
+    fromMonth: document.getElementById('from-month').value, toMonth: document.getElementById('to-month').value,
+    basicPay: document.getElementById('basic-pay').value, procTotal: document.getElementById('proc-total').value,
+    procServed: document.getElementById('proc-served').value, totalKm: document.getElementById('bailiff-total-km').innerText,
+    totalFare: document.getElementById('bailiff-total-fare').innerText, totalDa: document.getElementById('bailiff-total-da').innerText,
+    grandTotal: document.getElementById('bailiff-grand-total').innerText, days
+  };
+}
+
+async function createFivePagePdfBase64() {
+  syncAllForms();
+  const { jsPDF } = window.jspdf;
+  const ids = ['tab-bailiff', 'tab-ta', 'tab-cert', 'tab-closing', 'tab-gtr'];
+  let pdf = null;
+  for (let i = 0; i < ids.length; i++) {
+    const sourceEl = document.getElementById(ids[i]);
+    const clone = sourceEl.cloneNode(true);
+    clone.classList.remove('hidden');
+    clone.style.width = ids[i] === 'tab-ta' ? '1450px' : '1050px';
+    clone.querySelectorAll('input, select, textarea').forEach(el => {
+      const span = document.createElement('span');
+      if (el.tagName === 'SELECT') {
+        span.textContent = el.options[el.selectedIndex]?.text || el.value || '';
+      } else {
+        span.textContent = el.value || '';
+      }
+      span.className = el.className;
+      const isCharBox = el.classList.contains('char-box');
+      const isTableData = !!el.closest('table');
+      const noPdfLine = el.classList.contains('pdf-no-line');
+      if (isCharBox) {
+        span.style.border = getComputedStyle(el).border || '1px solid #000';
+        span.style.width = getComputedStyle(el).width;
+        span.style.height = getComputedStyle(el).height;
+        span.style.textAlign = 'center';
+        span.style.boxSizing = 'border-box';
+      } else {
+        span.style.borderBottom = (isTableData || noPdfLine) ? '0' : (getComputedStyle(el).borderBottom || '1px solid #000');
+      }
+      span.style.textDecoration = (isTableData || noPdfLine) ? 'none' : getComputedStyle(el).textDecoration;
+      if (el.classList.contains('from-input') || el.classList.contains('to-input')) span.style.fontSize = '12.5px';
+      span.style.padding = '1px 3px';
+      el.replaceWith(span);
+    });
+    const host = document.createElement('div');
+    host.className = 'pdf-render-root';
+    host.style.position = 'fixed';
+    host.style.left = '-20000px';
+    host.style.top = '0';
+    host.style.width = clone.style.width;
+    host.appendChild(clone);
+    document.body.appendChild(host);
+
+    try {
+      const canvas = await html2canvas(clone, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#ffffff',
+        logging: false,
+        windowWidth: ids[i] === 'tab-ta' ? 1600 : 1100
+      });
+      const landscape = ids[i] === 'tab-ta';
+      if (!pdf) {
+        pdf = new jsPDF({ orientation: landscape ? 'landscape' : 'portrait', unit: 'mm', format: 'a4', compress: true });
+      } else {
+        pdf.addPage('a4', landscape ? 'landscape' : 'portrait');
+      }
+      const pageW = landscape ? 297 : 210;
+      const pageH = landscape ? 210 : 297;
+      const margin = 5;
+      const usableW = pageW - margin * 2;
+      const usableH = pageH - margin * 2;
+      const ratio = Math.min(usableW / canvas.width, usableH / canvas.height);
+      const imgW = canvas.width * ratio;
+      const imgH = canvas.height * ratio;
+      const x = margin + (usableW - imgW) / 2;
+      const y = margin + (usableH - imgH) / 2;
+      pdf.addImage(canvas.toDataURL('image/jpeg', 0.92), 'JPEG', x, y, imgW, imgH);
+    } finally {
+      host.remove();
+    }
+  }
+  return pdf.output('datauristring').split(',')[1];
+}
+
+/**
+ * Universal Runner: Handles POST & GET requests to Google Apps Script
+ */
+async function runGoogleScript(method, ...args) {
+  if (typeof google !== 'undefined' && google?.script?.run) {
+    return new Promise((resolve, reject) => {
+      google.script.run
+        .withSuccessHandler(resolve)
+        .withFailureHandler(reject)[method](...args);
+    });
+  }
+
+  const endpoint = GOOGLE_SCRIPT_URL;
+  if (!endpoint || endpoint.includes("AKfycbxxxx")) {
+    throw new Error("કૃપા કરીને પહેલા તમારી Google Apps Script Web App લિંક (GOOGLE_SCRIPT_URL) સેટ કરો.");
+  }
+
+  const bodyData = JSON.stringify({ action: method, args: args });
+  const response = await fetch(endpoint, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: bodyData
+  });
+
+  const result = await response.json();
+  if (!result || result.ok !== true) {
+    throw new Error(result?.message || 'Google Sheet તરફથી કોઈ યોગ્ય જવાબ મળ્યો નથી.');
+  }
+  return result;
+}
+
+async function saveBillData() {
+  const bill = collectBillObject();
+  if (!bill.bailiffName || bill.bailiffName === 'અનામી બેલીફ') {
+    alert('કૃપા કરીને બેલીફનું નામ દાખલ કરો.');
+    return;
+  }
+  const button = document.querySelector('button[onclick="saveBillData()"]');
+  if (button) { button.disabled = true; button.textContent = 'PDF બનાવી રહ્યા છે...'; }
+  setSyncStatus('પાંચેય પેજનું PDF તૈયાર થઈ રહ્યું છે...');
+  try {
+    bill.pdfBase64 = await createFivePagePdfBase64();
+    if (button) { button.textContent = 'Google Sheet માં સેવ થાય છે...'; }
+    const result = await runGoogleScript('saveBill', bill);
+    if (!result || result.ok !== true) throw new Error(result?.message || 'બિલ સેવ થયું નથી.');
+    bill.pdfUrl = result.pdfUrl || '';
+    bill.updatedAt = result.updatedAt || new Date().toLocaleString('gu-IN');
+    delete bill.pdfBase64;
+    currentBillId = bill.id;
+    putLocalBill(bill);
+    renderSavedBillsUI();
+    setSyncStatus('બિલ Google Sheet માં સેવ થયું અને પાંચ પેજનું PDF Google Drive માં સાચવાયું.');
+    alert('બિલ સફળતાપૂર્વક Google Sheet માં સેવ થયું છે અને PDF Google Drive માં સાચવાઈ છે.');
+  } catch (e) {
+    console.error(e);
+    setSyncStatus('સેવ કરવામાં ભૂલ: ' + e.message, true);
+    alert('બિલ સેવ થઈ શક્યું નથી: ' + e.message);
+  } finally {
+    if (button) { button.disabled = false; button.textContent = '💾 બિલ સેવ (Google Sheet)'; }
+  }
+}
+
+/**
+ * Fast Live Sync directly from Google Sheet (Accessible on Mobile & PC simultaneously)
+ */
+async function syncFromGoogleSheet(silent = false) {
+  if (!silent) setSyncStatus('Google Sheet માંથી તમામ બિલ લાવી રહ્યા છે...');
+  try {
+    const fetchUrl = `${GOOGLE_SCRIPT_URL}?action=getBills&t=${Date.now()}`;
+    const response = await fetch(fetchUrl);
+    const payload = await response.json();
+
+    if (!payload || !payload.ok || !Array.isArray(payload.bills)) {
+      throw new Error(payload?.message || 'Google Sheet માંથી બિલ મળ્યા નથી.');
+    }
+
+    // Save fetched bills to local memory of this device
+    localStorage.setItem('bailiff_saved_bills', JSON.stringify(payload.bills));
+    renderSavedBillsUI();
+    if (!silent) setSyncStatus(`Google Sheet માંથી ${payload.bills.length} બિલ સફળતાપૂર્વક મળ્યા.`);
+  } catch (e) {
+    console.error('Sync error:', e);
+    if (!silent) setSyncStatus('Google Sheet Sync નિષ્ફળ: ' + e.message, true);
+  }
+}
+
+function renderSavedBillsUI() {
+  const list = getLocalBills();
+  const query = (document.getElementById('saved-search')?.value || '').trim().toLocaleLowerCase();
+  const filtered = list.filter(b => [b.bailiffName, b.fromMonth, b.toMonth, b.updatedAt, b.id]
+    .some(v => String(v || '').toLocaleLowerCase().includes(query)));
+  
+  const badge = document.getElementById('saved-count');
+  if (badge) badge.innerText = list.length;
+
+  const container = document.getElementById('saved-bills-container');
+  if (!container) return;
+  container.innerHTML = "";
+
+  if (!filtered.length) {
+    container.innerHTML = `<div class="col-span-full text-sm text-slate-500 border rounded-lg p-4">${query ? 'આ શોધ મુજબ કોઈ બિલ મળ્યું નથી.' : 'હજુ કોઈ બિલ સેવ નથી. નવું બિલ બનાવી "બિલ સેવ" દબાવો અથવા ઉપરનું સિંક બટન દબાવો.'}</div>`;
+    return;
+  }
+
+  filtered.forEach(b => {
+    const card = document.createElement('div');
+    card.className = 'border border-slate-300 rounded-xl p-4 bg-slate-50 space-y-2 shadow-sm';
+    const heading = document.createElement('h4'); heading.className = 'font-bold text-sm text-slate-900';
+    heading.textContent = b.bailiffName || 'નામ આપેલ નથી';
+    const sub = document.createElement('p'); sub.className = 'text-xs text-slate-500';
+    sub.textContent = `માસ: ${b.fromMonth || ''} થી ${b.toMonth || ''} | સેવ: ${b.updatedAt || '-'}`;
+    const amount = document.createElement('p'); amount.className = 'text-sm font-extrabold text-emerald-800';
+    amount.textContent = `કુલ ₹${b.grandTotal || '0.00'}`;
+    const actions = document.createElement('div'); actions.className = 'flex gap-2 pt-2';
+    
+    const open = document.createElement('button'); open.className = 'flex-1 bg-sky-600 hover:bg-sky-700 text-white py-1.5 rounded text-xs font-bold';
+    open.textContent = 'ખોલો'; open.onclick = () => openSavedBill(b.id);
+    
+    if (b.pdfUrl) {
+      const pdf = document.createElement('a');
+      pdf.className = 'bg-emerald-700 hover:bg-emerald-800 text-white px-3 py-1.5 rounded text-xs font-bold text-center flex items-center';
+      pdf.textContent = 'PDF';
+      pdf.href = b.pdfUrl;
+      pdf.target = '_blank';
+      pdf.rel = 'noopener';
+      actions.appendChild(pdf);
+    }
+    
+    const del = document.createElement('button'); del.className = 'bg-rose-100 hover:bg-rose-200 text-rose-700 px-3 py-1.5 rounded text-xs font-bold';
+    del.textContent = 'ડિલીટ'; del.onclick = () => deleteSavedBill(b.id);
+    
+    actions.prepend(open);
+    actions.append(del); card.append(heading, sub, amount, actions); container.appendChild(card);
+  });
+}
+
+function openSavedBill(id) {
+  const bill = getLocalBills().find(b => b.id === id);
+  if (!bill) return;
+  currentBillId = bill.id;
+  document.getElementById('court-title').value = bill.courtTitle || '';
+  document.getElementById('bailiff-name').value = bill.bailiffName || '';
+  document.getElementById('from-month').value = bill.fromMonth || '';
+  document.getElementById('to-month').value = bill.toMonth || '';
+  document.getElementById('basic-pay').value = bill.basicPay || '';
+  document.getElementById('proc-total').value = bill.procTotal || 0;
+  document.getElementById('proc-served').value = bill.procServed || 0;
+  document.getElementById('bailiff-tbody').innerHTML = '';
+  dayCounter = 0;
+
+  if (Array.isArray(bill.days) && bill.days.length) {
+    bill.days.forEach(d => addNewDayGroup(d.date || '', d.pct ?? '30', d.da ?? null, d.journeys || []));
+  } else if (Array.isArray(bill.journeys) && bill.journeys.length) {
+    const grouped = new Map();
+    bill.journeys.forEach(j => {
+      const key = j.date || 'legacy-' + grouped.size;
+      if (!grouped.has(key)) grouped.set(key, { date: j.date || '', pct: j.pct ?? '100', da: 0, journeys: [] });
+      const day = grouped.get(key);
+      day.da += Number(j.da ?? ((Number(document.getElementById('full-da-rate').value) || 300) * Number(j.pct ?? 100) / 100));
+      day.journeys.push(j);
+    });
+    grouped.forEach(d => addNewDayGroup(d.date, String(d.pct), d.da, d.journeys));
+  } else {
+    addNewDayGroup();
+  }
+  calcProcessPct();
+  recalculateAll();
+  switchTab('bailiff');
+}
+
+async function deleteSavedBill(id) {
+  if (!confirm('શું તમે આ બિલ Google Sheet અને આ ઉપકરણમાંથી કાઢી નાખવા માંગો છો?')) return;
+  setSyncStatus('બિલ કાઢવામાં આવી રહ્યું છે...');
+  try {
+    const result = await runGoogleScript('deleteBill', id);
+    if (result && result.ok === false) throw new Error(result.message || 'બિલ મળ્યું નથી.');
+    localStorage.setItem('bailiff_saved_bills', JSON.stringify(getLocalBills().filter(b => b.id !== id)));
+    renderSavedBillsUI();
+    setSyncStatus('બિલ Google Sheet અને Google Drive માંથી કાઢી નાખ્યું.');
+  } catch (e) {
+    setSyncStatus('બિલ કાઢી શકાયું નથી: ' + e.message, true);
+    alert('બિલ કાઢી શકાયું નથી: ' + e.message);
+  }
+}
+
+function resetNewBill() {
+  initFreshPageEveryTime();
+}
+</script>
+</body>
+</html>
