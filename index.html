@@ -231,7 +231,6 @@ body { font-family: 'Noto Sans Gujarati', 'Inter', sans-serif; color: #000; }
             <td class="border border-black p-1">-</td>
             <td id="ta-sum-pct" class="border border-black p-1">0.00 %</td>
             <td id="ta-sum-da" class="border border-black p-1 text-right">0.00</td>
-            <td class="border border-black p-1">-</td>
             <td id="ta-sum-grand" class="border border-black p-1 text-right">0.00</td>
           </tr>
         </tfoot>
@@ -879,11 +878,19 @@ async function runGoogleScript(method, ...args) {
     throw new Error("કૃપા કરીને પહેલા તમારી Google Apps Script Web App લિંક (GOOGLE_SCRIPT_URL) સેટ કરો.");
   }
 
-  const bodyData = JSON.stringify({ action: method, args: args });
+  const payload = { action: method, args: args };
+  if (method === 'saveBill' && args[0]) {
+    payload.bill = args[0];
+    payload.id = args[0].id;
+  } else if (method === 'deleteBill' && args[0]) {
+    payload.billId = args[0];
+    payload.id = args[0];
+  }
+
   const response = await fetch(endpoint, {
     method: 'POST',
     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-    body: bodyData
+    body: JSON.stringify(payload)
   });
 
   const result = await response.json();
