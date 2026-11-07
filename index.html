@@ -386,9 +386,9 @@ body { font-family: 'Noto Sans Gujarati', 'Inter', sans-serif; color: #000; }
               </tr>
             </thead>
             <tbody>
-              <tr class="border-b border-black h-9"><td class="border border-black text-center">0105</td><td class="border border-black p-1">Leave Travel Concession (Net)</td><td class="edp-cell">0</td><td class="edp-cell">1</td><td class="edp-cell">0</td><td class="edp-cell">5</td><td class="edp-cell">+</td><td class="border border-black p-1"></td><td class="border border-black p-1"></td></tr>
-              <tr class="border-b border-black h-9 font-bold"><td class="border border-black text-center">1100</td><td class="border border-black p-1">Domestic Travel Expenses (Net)</td><td class="edp-cell">1</td><td class="edp-cell">1</td><td class="edp-cell">0</td><td class="edp-cell">1</td><td class="edp-cell">+</td><td id="gtr-dom-rs" class="border border-black p-1 text-right text-sm font-extrabold">0</td><td class="border border-black p-1 text-center">00</td></tr>
-              <tr class="border-b border-black h-9"><td class="border border-black text-center">1200</td><td class="border border-black p-1">Foreign Travel Exp. (Net)</td><td class="edp-cell">1</td><td class="edp-cell">2</td><td class="edp-cell">0</td><td class="edp-cell">1</td><td class="edp-cell">+</td><td class="border border-black p-1"></td><td class="border border-black p-1"></td></tr>
+              <tr class="border-b border-black h-9"><td class="border border-black text-center">0105</td><td class="border border-black p-1">Leave Travel Concession (Net)</td><td class="edp-cell">0</td><td class="edp-cell">0</td><td class="edp-cell">1</td><td class="edp-cell">0</td><td class="edp-cell">5</td><td class="border border-black p-1"></td><td class="border border-black p-1"></td></tr>
+              <tr class="border-b border-black h-9 font-bold"><td class="border border-black text-center">1100</td><td class="border border-black p-1">Domestic Travel Expenses (Net)</td><td class="edp-cell">1</td><td class="edp-cell">1</td><td class="edp-cell">0</td><td class="edp-cell">0</td><td class="edp-cell">+</td><td id="gtr-dom-rs" class="border border-black p-1 text-right text-sm font-extrabold">0</td><td class="border border-black p-1 text-center">00</td></tr>
+              <tr class="border-b border-black h-9"><td class="border border-black text-center">1200</td><td class="border border-black p-1">Foreign Travel Exp. (Net)</td><td class="edp-cell">1</td><td class="edp-cell">2</td><td class="edp-cell">0</td><td class="edp-cell">0</td><td class="edp-cell">+</td><td class="border border-black p-1"></td><td class="border border-black p-1"></td></tr>
               <tr class="h-9"><td class="border border-black text-center">1100</td><td class="border border-black p-1">T.A./D.A. to non Official Members</td><td class="edp-cell">1</td><td class="edp-cell">1</td><td class="edp-cell">0</td><td class="edp-cell">2</td><td class="edp-cell">+</td><td class="border border-black p-1"></td><td class="border border-black p-1"></td></tr>
             </tbody>
           </table>
@@ -417,8 +417,9 @@ body { font-family: 'Noto Sans Gujarati', 'Inter', sans-serif; color: #000; }
 
 <script>
 let dayCounter = 0, currentBillId = null;
-// Deploy the companion Google Apps Script and paste its /exec URL here.
-const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwzfJA7wR-i1_aT2EVsqN6iEUD_bqECC-X0tWKfUxAQwcPQWSw0bmPOOAzsdEFj5Tgj9w/exec";
+
+// તમારી નવી Google Apps Script Web App /exec લિંક:
+const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwBCW2JHltXHmRceZ345Z6OTGgAkbXD3MX2TJYOrSKg0GUdQGM9FMYrwwFn1NafVbRa/exec";
 
 document.addEventListener("DOMContentLoaded", () => {
   try {
@@ -841,17 +842,44 @@ async function createFivePagePdfBase64() {
   return pdf.output('datauristring').split(',')[1];
 }
 
-function runGoogleScript(method, ...args) {
-  return new Promise((resolve, reject) => {
-    if (!window.google || !google.script || !google.script.run) {
-      reject(new Error('આ પેજ Google Apps Script Web App માં ખોલેલું નથી. Deploy કરેલી /exec લિંકથી ખોલો.'));
-      return;
-    }
-    const runner = google.script.run
-      .withSuccessHandler(resolve)
-      .withFailureHandler(err => reject(new Error(err && err.message ? err.message : String(err))));
-    runner[method](...args);
+/**
+ * Universal runner: Works on GitHub Pages, Mobile & PC via Google Apps Script Web App API
+ */
+async function runGoogleScript(method, ...args) {
+  // ૧. જો સીધું Google Script અંદર રન થતું હોય
+  if (window.google && google.script && google.script.run) {
+    return new Promise((resolve, reject) => {
+      const runner = google.script.run
+        .withSuccessHandler(resolve)
+        .withFailureHandler(err => reject(new Error(err && err.message ? err.message : String(err))));
+      runner[method](...args);
+    });
+  }
+
+  // ૨. GitHub Pages પરથી Fetch રિક્વેસ્ટ
+  if (!GOOGLE_SCRIPT_URL) {
+    throw new Error('GOOGLE_SCRIPT_URL સેટ કરેલ નથી.');
+  }
+
+  let payload = { action: method };
+  if (method === 'saveBill') {
+    payload.bill = args[0];
+  } else if (method === 'deleteBill') {
+    payload.billId = args[0];
+  }
+
+  // 'text/plain;charset=utf-8' CORS preflight ટાળવા માટે જરૂરી છે
+  const response = await fetch(GOOGLE_SCRIPT_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify(payload)
   });
+
+  const result = await response.json();
+  if (!result || result.ok === false) {
+    throw new Error(result?.message || 'Google Sheet તરફથી કોઈ જવાબ મળ્યો નથી.');
+  }
+  return result;
 }
 
 async function saveBillData() {
@@ -865,6 +893,7 @@ async function saveBillData() {
   setSyncStatus('પાંચેય પેજનું PDF તૈયાર થઈ રહ્યું છે...');
   try {
     bill.pdfBase64 = await createFivePagePdfBase64();
+    if (button) { button.textContent = 'Google Sheet માં સેવ થાય છે...'; }
     const result = await runGoogleScript('saveBill', bill);
     if (!result || result.ok !== true) throw new Error(result?.message || 'બિલ સેવ થયું નથી.');
     bill.pdfUrl = result.pdfUrl || '';
@@ -1000,7 +1029,6 @@ function resetNewBill() {
   recalculateAll(); switchTab('bailiff');
 }
 function loadDefaultPhotoData() {
-  // Start with a clean blank form; sample rows from the old demo are not inserted.
   addNewDayGroup(new Date().toISOString().split('T')[0], "30", null, []);
 }
 </script>
