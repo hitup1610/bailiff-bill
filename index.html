@@ -3,6 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<!-- Strict No-Cache Meta Tags (દર વખતે ફ્રેશ પેજ ખોલવા માટે) -->
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate, max-age=0">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+
 <title>કોર્ટ બેલીફ રીપોર્ટ અને FORM G.T.R. No. 35 - સંપૂર્ણ 5 પેજ પોર્ટલ</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Gujarati:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -78,11 +84,11 @@ body { font-family: 'Noto Sans Gujarati', 'Inter', sans-serif; color: #000; }
 
   <div class="no-print bg-white p-3 rounded-xl shadow-sm border border-slate-300 flex flex-wrap items-center justify-between gap-2 text-xs">
     <div class="flex flex-wrap items-center gap-3">
-      <label class="font-bold">કિ.મી. દર (₹): <input type="number" id="km-rate" value="2.50" step="0.5" oninput="recalculateAll()" class="w-14 border border-slate-400 rounded px-1 py-0.5 font-bold text-center"></label>
-      <label class="font-bold">૧૦૦% D.A. (₹): <input type="number" id="full-da-rate" value="300" step="10" oninput="recalculateAll()" class="w-16 border border-slate-400 rounded px-1 py-0.5 font-bold text-center"></label>
-      <label class="font-bold text-sky-900 bg-sky-50 px-2 py-0.5 rounded border">કુલ પ્રોસેસ: <input type="number" id="proc-total" value="195" oninput="calcProcessPct()" class="w-14 border rounded px-1 font-bold text-center bg-white"></label>
-      <label class="font-bold text-emerald-900 bg-emerald-50 px-2 py-0.5 rounded border">બજાવેલ: <input type="number" id="proc-served" value="181" oninput="calcProcessPct()" class="w-14 border rounded px-1 font-bold text-center bg-white"></label>
-      <span class="font-bold">વગર બજે: <b id="proc-unserved-disp">14</b> | ટકાવારી: <b id="proc-pct-disp" class="text-emerald-700">92%</b></span>
+      <label class="font-bold">કિ.મી. દર (₹): <input type="number" id="km-rate" value="2.50" step="0.5" oninput="recalculateAll()" autocomplete="off" class="w-14 border border-slate-400 rounded px-1 py-0.5 font-bold text-center"></label>
+      <label class="font-bold">૧૦૦% D.A. (₹): <input type="number" id="full-da-rate" value="300" step="10" oninput="recalculateAll()" autocomplete="off" class="w-16 border border-slate-400 rounded px-1 py-0.5 font-bold text-center"></label>
+      <label class="font-bold text-sky-900 bg-sky-50 px-2 py-0.5 rounded border">કુલ પ્રોસેસ: <input type="number" id="proc-total" value="0" oninput="calcProcessPct()" autocomplete="off" class="w-14 border rounded px-1 font-bold text-center bg-white"></label>
+      <label class="font-bold text-emerald-900 bg-emerald-50 px-2 py-0.5 rounded border">બજાવેલ: <input type="number" id="proc-served" value="0" oninput="calcProcessPct()" autocomplete="off" class="w-14 border rounded px-1 font-bold text-center bg-white"></label>
+      <span class="font-bold">વગર બજે: <b id="proc-unserved-disp">0</b> | ટકાવારી: <b id="proc-pct-disp" class="text-emerald-700">0%</b></span>
     </div>
     <button onclick="resetNewBill()" class="bg-rose-50 text-rose-700 border border-rose-300 px-3 py-1 rounded-lg font-bold">+ નવું કોરું ફોર્મ</button>
   </div>
@@ -92,17 +98,17 @@ body { font-family: 'Noto Sans Gujarati', 'Inter', sans-serif; color: #000; }
     <div class="text-center space-y-2 border-b-2 border-black pb-3">
       <div class="flex items-center justify-center gap-2">
         <span class="font-bold text-lg">મે.</span>
-        <input type="text" id="court-title" value="પ્રિન્સિપાલ સિવિલ જજ સાહેબશ્રી, ગાંધીનગર, મુ. ગાંધીનગર" oninput="syncAllForms()" class="underline-input text-center font-bold text-lg w-full sm:w-4/5 border-b border-dashed border-black">
+        <input type="text" id="court-title" value="પ્રિન્સિપાલ સિવિલ જજ સાહેબશ્રી, ગાંધીનગર, મુ. ગાંધીનગર" oninput="syncAllForms()" autocomplete="off" class="underline-input text-center font-bold text-lg w-full sm:w-4/5 border-b border-dashed border-black">
       </div>
       <div class="text-sm leading-relaxed pt-1">
         આપ સાહેબશ્રીના કોર્ટના બેલીફ 
-        <input type="text" id="bailiff-name" value="શ્રી આર. એમ. રાવત" oninput="syncAllForms()" class="underline-input font-bold border-b border-black px-2 text-center min-w-[200px]">
+        <input type="text" id="bailiff-name" value="" placeholder="બેલીફનું નામ દાખલ કરો" oninput="syncAllForms()" autocomplete="off" class="underline-input font-bold border-b border-black px-2 text-center min-w-[200px]">
         નો નમ્રતાપુર્વક રીપોર્ટ કે, માહે 
-        <input type="text" id="from-month" value="નવેમ્બર-૨૦૨૪" oninput="syncAllForms()" class="underline-input font-bold border-b border-black w-28 text-center">
+        <input type="text" id="from-month" value="" placeholder="માસ" oninput="syncAllForms()" autocomplete="off" class="underline-input font-bold border-b border-black w-28 text-center">
         થી માહે 
-        <input type="text" id="to-month" value="ડિસેમ્બર-૨૦૨૪" oninput="syncAllForms()" class="underline-input font-bold border-b border-black w-28 text-center">
+        <input type="text" id="to-month" value="" placeholder="માસ" oninput="syncAllForms()" autocomplete="off" class="underline-input font-bold border-b border-black w-28 text-center">
         દરમિયાન અમો પ્રોસેસ બજાવવા સારુ ગયેલા. જેનો રીપોર્ટ નીચે મુજબ છે. મારે બેઝીક પગાર રૂ. 
-        <input type="number" id="basic-pay" value="25500" oninput="syncAllForms()" class="underline-input font-bold border-b border-black w-24 text-center">
+        <input type="number" id="basic-pay" value="" placeholder="પગાર" oninput="syncAllForms()" autocomplete="off" class="underline-input font-bold border-b border-black w-24 text-center">
         પ્રતિ માસ છે.
       </div>
     </div>
@@ -260,7 +266,7 @@ body { font-family: 'Noto Sans Gujarati', 'Inter', sans-serif; color: #000; }
         <div class="flex gap-3"><span class="font-extrabold border border-black rounded-full w-6 h-6 flex items-center justify-center shrink-0">૪</span><p>આથી પ્રમાણપત્ર આપવામાં આવે છે કે સદરહુ બિલમાં દર્શાવેલ તમામ એન્ટ્રીઓની નાજરશ્રીએ બેલીફ ડાયરી સાથે ચકાસેલ છે.</p></div>
         <div class="flex gap-3">
           <span class="font-extrabold border border-black rounded-full w-6 h-6 flex items-center justify-center shrink-0">૫</span>
-          <p><span id="cert-bailiff-name" class="underline font-extrabold"></span> ને માહે- <span id="cert-period" class="underline font-extrabold"></span> દરમિયાન કુલ <span id="cert-total-proc" class="underline font-extrabold px-1">195</span> પ્રોસેસ આવેલ છે જે પૈકી <span id="cert-served-proc" class="underline font-extrabold px-1">181</span> પ્રોસેસ બજવણી કરી તેમજ <span id="cert-unserved-proc" class="underline font-extrabold px-1">14</span> પ્રોસેસ વગર બજે રજુ કરેલ છે જે બજવણીની ટકાવારી <span id="cert-pct-proc" class="underline font-extrabold px-1">92%</span> થાય છે.</p>
+          <p><span id="cert-bailiff-name" class="underline font-extrabold"></span> ને માહે- <span id="cert-period" class="underline font-extrabold"></span> દરમિયાન કુલ <span id="cert-total-proc" class="underline font-extrabold px-1">0</span> પ્રોસેસ આવેલ છે જે પૈકી <span id="cert-served-proc" class="underline font-extrabold px-1">0</span> પ્રોસેસ બજવણી કરી તેમજ <span id="cert-unserved-proc" class="underline font-extrabold px-1">0</span> પ્રોસેસ વગર બજે રજુ કરેલ છે જે બજવણીની ટકાવારી <span id="cert-pct-proc" class="underline font-extrabold px-1">0%</span> થાય છે.</p>
         </div>
         <div class="flex gap-3"><span class="font-extrabold border border-black rounded-full w-6 h-6 flex items-center justify-center shrink-0">૬</span><p>આથી પ્રમાણપત્ર આપવામાં આવે છે કે સદરહુ કર્મચારીએ ૮ (આઠ) કિલોમીટર થી વધુ મુસાફરી કરેલ છે. જેથી તેઓને બિલ મળવા પાત્ર થાય છે.</p></div>
       </div>
@@ -278,12 +284,12 @@ body { font-family: 'Noto Sans Gujarati', 'Inter', sans-serif; color: #000; }
           <div class="text-right pt-6 pr-2 font-bold">(Government Servant)</div>
         </div>
         <div class="p-3 space-y-4 border-b border-black">
-          <div>PASSED for Rs. (In words) : <input type="text" id="passed-words" class="underline-input border-b border-black w-full font-bold mt-1"></div>
+          <div>PASSED for Rs. (In words) : <input type="text" id="passed-words" autocomplete="off" class="underline-input border-b border-black w-full font-bold mt-1"></div>
           <div class="flex justify-between pt-3"><span>Dated ______________ 202</span><span class="font-bold pr-4">Head of Office.</span></div>
           <div class="text-right pt-6 pr-4 font-bold">(Controlling Officer.)</div>
         </div>
         <div class="p-3 space-y-5 border-b border-black">
-          <div>Pay Rupees. (in words and figures) <input type="text" id="pay-words-fig" class="underline-input border-b border-black w-full font-bold mt-1"></div>
+          <div>Pay Rupees. (in words and figures) <input type="text" id="pay-words-fig" autocomplete="off" class="underline-input border-b border-black w-full font-bold mt-1"></div>
           <div class="flex justify-between items-end pt-5">
             <span>Date ______________</span>
             <div class="text-center"><p class="border-b border-black pb-0.5 font-semibold">Accountant/Treasury Officer/P.A.O.</p><p class="font-semibold pt-0.5">Sub-Treasury Officer.</p></div>
@@ -354,12 +360,12 @@ body { font-family: 'Noto Sans Gujarati', 'Inter', sans-serif; color: #000; }
     <div class="text-center space-y-1">
       <h2 class="text-lg font-extrabold">FORM G. T. R. No. 35</h2>
       <p class="text-xs font-semibold">(See Rule 169 and 186)</p>
-      <div class="flex justify-end text-xs font-bold"><span>Bill Register No.</span><input type="text" id="bill-reg-no" class="underline-input border-b border-black w-32 ml-1 text-center"></div>
-      <div class="text-left text-xs font-semibold">Travelling Allowance Bill of the Establishment/Gazetted Government Servants. Office of the <input type="text" value="Principal Civil Judge Court, Gandhinagar" class="pdf-no-line font-bold w-72 px-1"></div>
+      <div class="flex justify-end text-xs font-bold"><span>Bill Register No.</span><input type="text" id="bill-reg-no" autocomplete="off" class="underline-input border-b border-black w-32 ml-1 text-center"></div>
+      <div class="text-left text-xs font-semibold">Travelling Allowance Bill of the Establishment/Gazetted Government Servants. Office of the <input type="text" value="Principal Civil Judge Court, Gandhinagar" autocomplete="off" class="pdf-no-line font-bold w-72 px-1"></div>
     </div>
     <div class="border-t-2 border-b-2 border-black py-2 space-y-1.5 text-xs">
       <div class="text-center font-bold underline">(For Use in Treasury)</div>
-      <div><span class="font-semibold">Name of the Treasury :</span> <input type="text" id="treasury-name" value="District Treasury Office, Gandhinagar" class="pdf-no-line w-72 px-1 font-bold"></div>
+      <div><span class="font-semibold">Name of the Treasury :</span> <input type="text" id="treasury-name" value="District Treasury Office, Gandhinagar" autocomplete="off" class="pdf-no-line w-72 px-1 font-bold"></div>
       <div class="grid grid-cols-3 gap-2 pt-1"><div>Bill Transit Reg. Sr. No. _______ Date _______</div><div class="text-center">Token No. _______</div><div class="text-right">Date _______</div></div>
     </div>
     <div class="space-y-2 text-xs">
@@ -418,22 +424,63 @@ body { font-family: 'Noto Sans Gujarati', 'Inter', sans-serif; color: #000; }
 <script>
 let dayCounter = 0, currentBillId = null;
 
-// તમારી નવી Google Apps Script Web App /exec લિંક:
+// તમારી Google Apps Script Web App લિંક:
 const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwBCW2JHltXHmRceZ345Z6OTGgAkbXD3MX2TJYOrSKg0GUdQGM9FMYrwwFn1NafVbRa/exec";
+
+// બ્રાઉઝર જ્યારે પણ ખૂલે કે રિફ્રેશ થાય ત્યારે હંમેશા નવું ફ્રેશ ફોર્મ ખોલવું
+window.addEventListener("pageshow", (event) => {
+  initFreshPageEveryTime();
+});
 
 document.addEventListener("DOMContentLoaded", () => {
   try {
     if (window.lucide && typeof window.lucide.createIcons === "function") window.lucide.createIcons();
-    loadDefaultPhotoData();
-    calcProcessPct();
+    initFreshPageEveryTime();
     loadSavedBillsList();
-    recalculateAll();
   } catch (error) {
     console.error("પેજ શરૂ કરવામાં સમસ્યા:", error);
-    const status = document.getElementById("sync-status");
-    if (status) status.textContent = "ફોર્મ શરૂ કરવામાં સમસ્યા આવી: " + error.message;
   }
 });
+
+function initFreshPageEveryTime() {
+  currentBillId = null;
+  dayCounter = 0;
+
+  // ચાલુ માસ અને વર્ષ ઓટો-સેટ કરવા
+  const gujMonths = ["જાન્યુઆરી", "ફેબ્રુઆરી", "માર્ચ", "એપ્રિલ", "મે", "જૂન", "જુલાઈ", "ઓગસ્ટ", "સપ્ટેમ્બર", "ઓક્ટોબર", "નવેમ્બર", "ડિસેમ્બર"];
+  const now = new Date();
+  const currentMonth = gujMonths[now.getMonth()] + "-" + now.getFullYear();
+
+  // તમામ ઇનપુટ એકદમ ફ્રેશ કોરા કરવા
+  const bNameEl = document.getElementById('bailiff-name');
+  if (bNameEl) bNameEl.value = "";
+
+  const fMEl = document.getElementById('from-month');
+  if (fMEl) fMEl.value = currentMonth;
+
+  const tMEl = document.getElementById('to-month');
+  if (tMEl) tMEl.value = currentMonth;
+
+  const payEl = document.getElementById('basic-pay');
+  if (payEl) payEl.value = "";
+
+  const procTot = document.getElementById('proc-total');
+  if (procTot) procTot.value = "0";
+
+  const procSrv = document.getElementById('proc-served');
+  if (procSrv) procSrv.value = "0";
+
+  // ટેબલ સાફ કરી આજની તારીખનો નવો ખાલી દિવસ ઉમેરવો
+  const tbody = document.getElementById('bailiff-tbody');
+  if (tbody) tbody.innerHTML = "";
+
+  const todayStr = now.toISOString().split('T')[0];
+  addNewDayGroup(todayStr, "30", null, []);
+
+  calcProcessPct();
+  recalculateAll();
+  switchTab('bailiff');
+}
 
 function switchTab(tabId) {
   document.body.classList.remove('print-all-mode');
@@ -510,7 +557,7 @@ function addNewDayGroup(dateStr = "", pct = "30", customDa = null, journeys = []
       </select>
     </td>
     <td class="border border-black p-1 text-center">-</td>
-    <td class="border border-black p-1"><input type="number" value="${calcDa}" oninput="recalculateAll()" class="day-da-input w-full text-right font-bold bg-transparent"></td>
+    <td class="border border-black p-1"><input type="number" value="${calcDa}" oninput="recalculateAll()" autocomplete="off" class="day-da-input w-full text-right font-bold bg-transparent"></td>
     <td class="border border-black p-1 text-right font-extrabold day-da-total">${calcDa.toFixed(2)}</td>
     <td class="border border-black p-1 text-center no-print"><button onclick="removeEntireDay('${dayId}')" class="text-rose-600 font-bold">✕</button></td>`;
   tbody.appendChild(allowanceTr);
@@ -535,13 +582,13 @@ function addJourneyRow(dayId, from="", outTime="", to="", inTime="", veh="મો
   const tr = document.createElement('tr');
   tr.className = `journey-row ${dayId}-row`;
   tr.innerHTML = `
-    <td class="border border-black p-1 text-center font-bold">${isFirst ? `<input type="date" value="${dateVal}" onchange="recalculateAll()" class="day-date w-full text-center font-bold bg-transparent">` : ''}</td>
-    <td class="border border-black p-1"><input type="text" list="village-list" value="${from}" oninput="recalculateAll()" class="from-input w-full px-1"></td>
-    <td class="border border-black p-1"><input type="time" value="${outTime}" oninput="recalculateAll()" class="out-input w-full text-center"></td>
-    <td class="border border-black p-1"><input type="text" list="village-list" value="${to}" oninput="recalculateAll()" class="to-input w-full px-1"></td>
-    <td class="border border-black p-1"><input type="time" value="${inTime}" oninput="recalculateAll()" class="in-input w-full text-center"></td>
-    <td class="border border-black p-1"><input type="text" value="${veh}" oninput="recalculateAll()" class="veh-input w-full text-center"></td>
-    <td class="border border-black p-1"><input type="number" value="${km}" oninput="recalculateAll()" class="km-input w-full text-center font-bold bg-yellow-50"></td>
+    <td class="border border-black p-1 text-center font-bold">${isFirst ? `<input type="date" value="${dateVal}" onchange="recalculateAll()" autocomplete="off" class="day-date w-full text-center font-bold bg-transparent">` : ''}</td>
+    <td class="border border-black p-1"><input type="text" list="village-list" value="${from}" oninput="recalculateAll()" autocomplete="off" class="from-input w-full px-1"></td>
+    <td class="border border-black p-1"><input type="time" value="${outTime}" oninput="recalculateAll()" autocomplete="off" class="out-input w-full text-center"></td>
+    <td class="border border-black p-1"><input type="text" list="village-list" value="${to}" oninput="recalculateAll()" autocomplete="off" class="to-input w-full px-1"></td>
+    <td class="border border-black p-1"><input type="time" value="${inTime}" oninput="recalculateAll()" autocomplete="off" class="in-input w-full text-center"></td>
+    <td class="border border-black p-1"><input type="text" value="${veh}" oninput="recalculateAll()" autocomplete="off" class="veh-input w-full text-center"></td>
+    <td class="border border-black p-1"><input type="number" value="${km}" oninput="recalculateAll()" autocomplete="off" class="km-input w-full text-center font-bold bg-yellow-50"></td>
     <td class="border border-black p-1"></td>
     <td class="border border-black p-1 text-right font-bold fare-cell"></td>
     <td class="border border-black p-1"></td>
@@ -572,7 +619,7 @@ function removeJourneyRow(btn, dayId) {
   row.remove();
   if (wasFirst) {
     const newFirst = document.querySelector(`.${dayId}-row`);
-    if (newFirst) newFirst.cells[0].innerHTML = `<input type="date" value="${savedDate}" onchange="recalculateAll()" class="day-date w-full text-center font-bold bg-transparent">`;
+    if (newFirst) newFirst.cells[0].innerHTML = `<input type="date" value="${savedDate}" onchange="recalculateAll()" autocomplete="off" class="day-date w-full text-center font-bold bg-transparent">`;
   }
   recalculateAll();
 }
@@ -843,10 +890,9 @@ async function createFivePagePdfBase64() {
 }
 
 /**
- * Universal runner: Works on GitHub Pages, Mobile & PC via Google Apps Script Web App API
+ * Universal Runner: Works on GitHub Pages, Mobile & PC via Google Apps Script Web App
  */
 async function runGoogleScript(method, ...args) {
-  // ૧. જો સીધું Google Script અંદર રન થતું હોય
   if (window.google && google.script && google.script.run) {
     return new Promise((resolve, reject) => {
       const runner = google.script.run
@@ -856,7 +902,6 @@ async function runGoogleScript(method, ...args) {
     });
   }
 
-  // ૨. GitHub Pages પરથી Fetch રિક્વેસ્ટ
   if (!GOOGLE_SCRIPT_URL) {
     throw new Error('GOOGLE_SCRIPT_URL સેટ કરેલ નથી.');
   }
@@ -868,7 +913,6 @@ async function runGoogleScript(method, ...args) {
     payload.billId = args[0];
   }
 
-  // 'text/plain;charset=utf-8' CORS preflight ટાળવા માટે જરૂરી છે
   const response = await fetch(GOOGLE_SCRIPT_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
@@ -877,7 +921,7 @@ async function runGoogleScript(method, ...args) {
 
   const result = await response.json();
   if (!result || result.ok === false) {
-    throw new Error(result?.message || 'Google Sheet તરફથી કોઈ જવાબ મળ્યો નથી.');
+    throw new Error(result?.message || 'Google Sheet તરફથી કોઈ યોગ્ય જવાબ મળ્યો નથી.');
   }
   return result;
 }
@@ -931,6 +975,7 @@ async function syncFromGoogleSheet() {
     setSyncStatus('Google Sheet Sync નિષ્ફળ: ' + e.message, true);
   }
 }
+
 function loadSavedBillsList() {
   const list = getLocalBills();
   const query = (document.getElementById('saved-search')?.value || '').trim().toLocaleLowerCase();
@@ -970,6 +1015,7 @@ function loadSavedBillsList() {
     actions.append(del); card.append(heading, sub, amount, actions); container.appendChild(card);
   });
 }
+
 function openSavedBill(id) {
   const bill = getLocalBills().find(b => b.id === id);
   if (!bill) return;
@@ -979,8 +1025,8 @@ function openSavedBill(id) {
   document.getElementById('from-month').value = bill.fromMonth || '';
   document.getElementById('to-month').value = bill.toMonth || '';
   document.getElementById('basic-pay').value = bill.basicPay || '';
-  document.getElementById('proc-total').value = bill.procTotal || 195;
-  document.getElementById('proc-served').value = bill.procServed || 181;
+  document.getElementById('proc-total').value = bill.procTotal || 0;
+  document.getElementById('proc-served').value = bill.procServed || 0;
   document.getElementById('bailiff-tbody').innerHTML = '';
   dayCounter = 0;
 
@@ -1017,19 +1063,9 @@ async function deleteSavedBill(id) {
     alert('બિલ કાઢી શકાયું નથી: ' + e.message);
   }
 }
+
 function resetNewBill() {
-  currentBillId = null;
-  document.getElementById('bailiff-name').value = "";
-  document.getElementById('from-month').value = "";
-  document.getElementById('to-month').value = "";
-  document.getElementById('basic-pay').value = "";
-  document.getElementById('bailiff-tbody').innerHTML = "";
-  dayCounter = 0;
-  addNewDayGroup(new Date().toISOString().split('T')[0], "30", null, []);
-  recalculateAll(); switchTab('bailiff');
-}
-function loadDefaultPhotoData() {
-  addNewDayGroup(new Date().toISOString().split('T')[0], "30", null, []);
+  initFreshPageEveryTime();
 }
 </script>
 </body>
